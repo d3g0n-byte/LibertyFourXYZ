@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\rage">
+      <UniqueIdentifier>{23b8f1bf-1bb6-406d-988b-6844d5655375}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\libertyFourXYZ">
+      <UniqueIdentifier>{e97ff0cc-9ddd-48c8-b8b9-a8631590e97b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="trace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_array.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_base.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_datResource.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_grcTexture.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_string.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="memory_manager.cpp">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClCompile>
+    <ClCompile Include="resource_reader.cpp">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClCompile>
+    <ClCompile Include="rsc85_layout.cpp">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClCompile>
+    <ClCompile Include="iv_pc_wtd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_grcFvf.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_grcIndexBuffer.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_grcVertexBuffer.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_grmGeometry.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_grmModel.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_rmcLod.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_math.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="setting.cpp">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClCompile>
+    <ClCompile Include="globals.cpp">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_crBone.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_crSkeleton.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="dds.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="iv_pc_wdr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_grmShader.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_rmcDrawable.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="rage_float16.cpp">
+      <Filter>Header Files\rage</Filter>
+    </ClCompile>
+    <ClCompile Include="fiTokenizer.cpp">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClCompile>
+    <ClCompile Include="mp3_pc_wtd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="trace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_array.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_base.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_datResource.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_grcTexture.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_math.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_string.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="memory_manager.h">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClInclude>
+    <ClInclude Include="resource_reader.h">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClInclude>
+    <ClInclude Include="rsc85_layout.h">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClInclude>
+    <ClInclude Include="iv_pc_wtd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_grcFvf.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_grmModel.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_grcVertexBuffer.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_grcIndexBuffer.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_grmGeometry.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_rmcLod.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_rmcDrawable.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_crBone.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="settings.h">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClInclude>
+    <ClInclude Include="globals.h">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_crSkeleton.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="dds.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="iv_pc_wdr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_grmShader.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_light.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_float16.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="fiTokenizer.h">
+      <Filter>Header Files\libertyFourXYZ</Filter>
+    </ClInclude>
+    <ClInclude Include="mp3_pc_wtd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="errors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
