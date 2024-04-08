@@ -78,7 +78,7 @@ namespace rage{
 			DWORD m_dwFlags;
 		};
 		rage::atArray<crSkeletonData::BoneIdData> m_boneIdMappings; // ид и индексы. сортировака по ид
-		DWORD m_dwUsageCount;
+		DWORD m_usageCount;
 		DWORD m_dwCrc;
 		rage::ConstString m_pszJointDataFileName;
 		crJointDataFile m_jointData;
@@ -91,6 +91,7 @@ namespace rage{
 		void clearRefCount();
 		void setRefCount();
 
+		void generateCrc();
 		void buildHierarchy();
 		void clearHierarchy();
 		void replacePtrsInHierarchy(libertyFourXYZ::rsc85_layout* pLayout);

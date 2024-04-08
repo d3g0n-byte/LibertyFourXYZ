@@ -27,22 +27,19 @@ namespace rage {
 		~grcVertexBuffer();
 		void place(rage::datResource* rsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
-		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);
-		//rage::grcVertexBuffer& operator=(rage::grcVertexBuffer& vb);
+		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, datResource* pRsc, DWORD dwDepth);
 	};
 
-	class grcVertexBufferD11 : public rage::grcVertexBuffer {
+	class grcVertexBufferD3D : public rage::grcVertexBuffer {
 	public:
 		void* m_pD3DBuffer; // = this + sizeof rage::grcIndexBuffer + sizeof(size_t)
 		DWORD reversed[8];
 
-		grcVertexBufferD11();
-		~grcVertexBufferD11();
+		grcVertexBufferD3D();
+		~grcVertexBufferD3D();
 		void place(rage::datResource* rsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
 		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);
-		//rage::grcVertexBufferD11& operator=(rage::grcVertexBufferD11& vb);
-
 	};
 
 

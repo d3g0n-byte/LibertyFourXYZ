@@ -15,13 +15,13 @@ namespace rage {
 		//rage::grcIndexBuffer& operator=(rage::grcIndexBuffer& ib);
 	};
 
-	class grcIndexBufferD11 : public grcIndexBuffer {
+	class grcIndexBufferD3D : public grcIndexBuffer {
 	public:
 		void* m_pD3DBuffer; // = this + sizeof rage::grcIndexBuffer + sizeof(size_t)
 		size_t padding[8];
 
-		grcIndexBufferD11();
-		~grcIndexBufferD11();
+		grcIndexBufferD3D();
+		~grcIndexBufferD3D();
 		void place(rage::datResource* rsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
 		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);

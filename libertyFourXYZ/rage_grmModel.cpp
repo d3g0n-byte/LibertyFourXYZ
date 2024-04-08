@@ -6,33 +6,33 @@
 #include "rage_math.h"
 #include "rage_grmGeometry.h"
 
-#include "fiTokenizer.h"
+//#include "fiTokenizer.h"
 #include "errors.h"
 
 namespace rage {
 	grmModel::grmModel() {
-		this->m_pavBounds = NULL;
-		this->m_pawShaderMappings = NULL;
+		this->m_pBounds = NULL;
+		this->m_pShaderMappings = NULL;
 		this->m_nbBoneCount = 0;
 		this->m_nbFlags = 0;
 		this->m_nbType = 0;
 		this->m_nbBoneIndex = 0;
 		this->m_nbStride = 0;
-		this->m_nbSkinFlag = 0;
+		this->m_bSkinnned= 0;
 		this->m_wShaderMappingCount = 0;
 	}
 
 	grmModel::~grmModel() {
-		if(this->m_pavBounds)
-			libertyFourXYZ::g_memory_manager.release<rage::Vector4>(this->m_pavBounds);
-		if(this->m_pawShaderMappings)
-			libertyFourXYZ::g_memory_manager.release<WORD>(this->m_pawShaderMappings);
+		if(this->m_pBounds)
+			dealloc_arr(this->m_pBounds);
+		if(this->m_pShaderMappings)
+			dealloc(this->m_pShaderMappings);
 		this->m_nbBoneCount = 0;
 		this->m_nbFlags = 0;
 		this->m_nbType = 0;
 		this->m_nbBoneIndex = 0;
 		this->m_nbStride = 0;
-		this->m_nbSkinFlag = 0;
+		this->m_bSkinnned = 0;
 		this->m_wShaderMappingCount = 0;
 	}
 
@@ -43,15 +43,15 @@ namespace rage {
 			this->m_geometries.place(rsc);
 
 		if (this->m_wShaderMappingCount) {
-			WORD* realPtr = rsc->getFixup<WORD>(this->m_pawShaderMappings, this->m_wShaderMappingCount * sizeof(WORD));
-			this->m_pawShaderMappings = libertyFourXYZ::g_memory_manager.allocate<WORD>("mdl, place, shade", this->m_wShaderMappingCount);
-			memcpy(this->m_pawShaderMappings, realPtr, sizeof WORD * this->m_wShaderMappingCount);
+			WORD* realPtr = rsc->getFixup<WORD>(this->m_pShaderMappings, this->m_wShaderMappingCount * sizeof(WORD));
+			this->m_pShaderMappings = new("mdl, place, shade")WORD [this->m_wShaderMappingCount];
+			memcpy(this->m_pShaderMappings, realPtr, sizeof WORD * this->m_wShaderMappingCount);
 		}
-		if (this->m_pavBounds) {
+		if (this->m_pBounds) {
 			DWORD dwCount = this->getBoundsCount();
-			rage::Vector4* realPtr = rsc->getFixup(this->m_pavBounds, sizeof(Vector4) * dwCount);
-			this->m_pavBounds = libertyFourXYZ::g_memory_manager.allocate<rage::Vector4>("mdl, place, granitsa", dwCount);
-			memcpy(this->m_pavBounds, realPtr, sizeof rage::Vector4 * dwCount);
+			rage::Vector4* realPtr = rsc->getFixup(this->m_pBounds, sizeof(Vector4) * dwCount);
+			this->m_pBounds = new("mdl, place, granitsa") Vector4 [dwCount];
+			memcpy(this->m_pBounds, realPtr, sizeof rage::Vector4 * dwCount);
 		}
 	}
 
@@ -86,16 +86,16 @@ namespace rage {
 			this->m_geometries.replacePtrs(pLayout, pRsc, dwDepth);
 
 		if (this->m_wShaderMappingCount) {
-			auto origData = this->m_pawShaderMappings;
-			pLayout->setPtr(this->m_pawShaderMappings);
-			DWORD dwSize = sizeof * this->m_pawShaderMappings * this->m_wShaderMappingCount;
-			memcpy(pRsc->getFixup(this->m_pawShaderMappings, dwSize), origData, dwSize);
+			auto origData = this->m_pShaderMappings;
+			pLayout->setPtr(this->m_pShaderMappings);
+			DWORD dwSize = sizeof * this->m_pShaderMappings * this->m_wShaderMappingCount;
+			memcpy(pRsc->getFixup(this->m_pShaderMappings, dwSize), origData, dwSize);
 		}
-		if (this->m_pavBounds) {
-			auto origData = this->m_pavBounds;
-			pLayout->setPtr(this->m_pavBounds);
-			DWORD dwSize = sizeof * this->m_pavBounds * this->getBoundsCount();
-			memcpy(pRsc->getFixup(this->m_pavBounds, dwSize), origData, dwSize);
+		if (this->m_pBounds) {
+			auto origData = this->m_pBounds;
+			pLayout->setPtr(this->m_pBounds);
+			DWORD dwSize = sizeof * this->m_pBounds * this->getBoundsCount();
+			memcpy(pRsc->getFixup(this->m_pBounds, dwSize), origData, dwSize);
 		}
 
 
@@ -108,9 +108,9 @@ namespace rage {
 		this->m_geometries.addToLayout(pLayout, dwDepth);
 
 		if (this->m_wShaderMappingCount)
-			pLayout->addObject(this->m_pawShaderMappings, 5, this->m_wShaderMappingCount);
-		if(this->m_pavBounds)
-			pLayout->addObject(this->m_pavBounds, 5, this->getBoundsCount());
+			pLayout->addObject(this->m_pShaderMappings, 5, this->m_wShaderMappingCount);
+		if(this->m_pBounds)
+			pLayout->addObject(this->m_pBounds, 5, this->getBoundsCount());
 
 
 	}

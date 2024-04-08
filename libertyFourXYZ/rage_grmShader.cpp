@@ -6,17 +6,15 @@
 
 
 namespace rage {
-	void grcInstanceData::place(datResource* pRsc, pgDictionary<grcTexturePC> *pTxdDict) {
-		bool bHaveIncludedTxd = pTxdDict != NULL;
-
+	void grcInstanceData::place(datResource* pRsc) {
 		auto params = pRsc->getFixup(this->pEntries, this->dwTotalSize);
 		auto types = pRsc->getFixup(this->pTypes, -1);
 		auto hashes = pRsc->getFixup(this->pEntriesHashes, -1);
 		
-		this->pEntries = libertyFourXYZ::g_memory_manager.allocate<Entry>("instanceData, place, params", this->dwCount);
-		this->pBasis = NULL; // created in game
-		this->pTypes = libertyFourXYZ::g_memory_manager.allocate<BYTE>("instanceData, place, types", this->dwCount);
-		this->pEntriesHashes = libertyFourXYZ::g_memory_manager.allocate<DWORD>("instanceData, place, hash", this->dwCount);
+		this->pEntries = new("instanceData, place, params") Entry [this->dwCount];
+		this->pEffect = NULL; // created in game
+		this->pTypes = new("instanceData, place, types")BYTE[this->dwCount];
+		this->pEntriesHashes = new("instanceData, place, hash") DWORD [this->dwCount];
 
 		memcpy(this->pEntriesHashes, hashes, sizeof(*this->pEntriesHashes) * this->dwCount);
 		
@@ -53,26 +51,39 @@ namespace rage {
 
 				if (this->pTypes[i] != 4) { // vectors
 					dwParamSize = dwArraySize * sizeof(Vector4);
-					this->pEntries[i].pVec4 = libertyFourXYZ::g_memory_manager.allocate<Vector4>("instanceData, place, vec", dwArraySize);
+					this->pEntries[i].pVec4 = new("instanceData, place, vec")Vector4 [dwArraySize];
 					memmove(this->pEntries[i].pVec4, origParam, dwParamSize);
 				}
 				else { // matrix
-					this->pEntries[i].pMtx = libertyFourXYZ::g_memory_manager.allocate<Matrix44>("instanceData, place, mtx");
+					this->pEntries[i].pMtx = new("instanceData, place, mtx") Matrix44;
 					memmove(this->pEntries[i].pMtx, origParam, sizeof(Matrix44));
 				}
 			}
 			else {
-				grcTexture* pBaseTxd = (grcTexture*)origParam;
+				BYTE type = ((grcTexture*)origParam)->m_nbResourceType;
+
+				if (type == eTextureResourceType::TEXTURE)
+					pRsc->fixupAndPlaceObj(this->pEntries[i].pTxd);
+				else if(type != eTextureResourceType::TEXTURE_RENDERTARGET){
+					 if(type == eTextureResourceType::TEXTURE_REFERENCE)
+						 pRsc->fixupAndPlaceObj(this->pEntries[i].pTxdRef);
+					 else {
+						 error("[grcInstanceData::place] Unknown texture resource type '%u'", (DWORD)type);
+						 return;
+					 }
+				}
+				/*grcTexture* pBaseTxd = (grcTexture*)origParam;
 				if (pBaseTxd->m_nbResourceType == eTextureResourceType::TEXTURE) {
 					if (!bHaveIncludedTxd) {
 						error("[grcInstanceData::place] the resource uses included textures, but they were not detected");
 						return;
 					}
-					grcTexturePC* pTmpTxd = libertyFourXYZ::g_memory_manager.allocate<grcTexturePC>("instanceData, place, tempTxd");
+					grcTexturePC* pTmpTxd = new("instanceData, place, tempTxd") grcTexturePC;
 					copy_class(pTmpTxd, (grcTexturePC*)pBaseTxd);
+					pTmpTxd->m_usageCount = 1; // delete if copy_class set usageCount to 0
 					pTmpTxd->place(pRsc);
 					DWORD dwHash = pTmpTxd->getHash();
-					libertyFourXYZ::g_memory_manager.release(pTmpTxd);
+					dealloc(pTmpTxd);
 					if (!pTxdDict->hasElementByHash(dwHash)) {
 						error("[grcInstanceData::place] the texture is listed as included, but it was not found. If you see this message, it is a bug in this tool");
 						return;
@@ -82,7 +93,7 @@ namespace rage {
 				}
 				else if (pBaseTxd->m_nbResourceType != eTextureResourceType::TEXTURE_RENDERTARGET) {
 					if (pBaseTxd->m_nbResourceType == eTextureResourceType::TEXTURE_REFERENCE) {
-						this->pEntries[i].pTxdRef = libertyFourXYZ::g_memory_manager.allocate<grcTextureReference>("instanceData, place, txdref" );
+						this->pEntries[i].pTxdRef = new("instanceData, place, txdref") grcTextureReference;
 						copy_class(this->pEntries[i].pTxdRef, (grcTextureReference*)pBaseTxd);
 						this->pEntries[i].pTxdRef->place(pRsc);
 					}
@@ -90,7 +101,7 @@ namespace rage {
 						error("[grcInstanceData::place] Unknown texture resource type '%u'", (DWORD)pBaseTxd->m_nbResourceType);
 						return;
 					}
-				}
+				}*/
 			}
 		}
 	}
@@ -132,20 +143,29 @@ namespace rage {
 			if (this->pTypes[i] != 0) continue;
 			if (this->pEntries[i].pVec4 == NULL) continue;
 
+			//if (this->pEntries[i].pTxdRef->m_nbResourceType == eTextureResourceType::TEXTURE_REFERENCE) {
+			//	pLayout->addObject(this->pEntries[i].pTxdRef, 5);
+			//	this->pEntries[i].pTxdRef->addToLayout(pLayout, dwDepth);
+			//}
 			if (this->pEntries[i].pTxdRef->m_nbResourceType == eTextureResourceType::TEXTURE_REFERENCE) {
 				pLayout->addObject(this->pEntries[i].pTxdRef, 5);
 				this->pEntries[i].pTxdRef->addToLayout(pLayout, dwDepth);
 			}
+			else if (this->pEntries[i].pTxdRef->m_nbResourceType == eTextureResourceType::TEXTURE) {
+				pLayout->addObject(this->pEntries[i].pTxd, 5);
+				this->pEntries[i].pTxd->addToLayout(pLayout, dwDepth);
+			}
+
 		}
 	}
 
 	grcInstanceData::grcInstanceData() {
 		this->pEntries = NULL;
-		this->pBasis = NULL;
+		this->pEffect = NULL;
 		this->dwCount = 0;
 		this->dwTotalSize = 0;
 		this->pTypes = NULL;
-		this->dwBasisHashCode = 0;
+		this->dwEffectHashCode = 0;
 		this->_f18 = 0;
 		this->_f1c = 0;
 		this->pEntriesHashes = NULL;
@@ -161,18 +181,21 @@ namespace rage {
 				if (this->pEntries[i].pVec4 == NULL) continue; // skip null params
 				switch (this->pTypes[i]) {
 				case 0:
-					if (this->pEntries[i].pTxdRef->m_nbResourceType == eTextureResourceType::TEXTURE_REFERENCE)
-						libertyFourXYZ::g_memory_manager.release(this->pEntries[i].pTxdRef);
+					//if (this->pEntries[i].pTxdRef->m_nbResourceType == eTextureResourceType::TEXTURE_REFERENCE)
+					//	dealloc(this->pEntries[i].pTxdRef);
+
+					// only with the condition that our dealloc function supports usageCount
+					dealloc(this->pEntries[i].pTxdRef);
 					break;
 				case 4:
-					libertyFourXYZ::g_memory_manager.release(this->pEntries[i].pMtx);
+					dealloc(this->pEntries[i].pMtx);
 					break;
 				case 1:
 				case 8:
 				case 14:
 				case 15:
 				case 16:
-					libertyFourXYZ::g_memory_manager.release(this->pEntries[i].pVec4);
+					dealloc_arr(this->pEntries[i].pVec4);
 					break;
 				default:
 					error("[grcInstanceData::~grcInstanceData] unk param type '%u'", (DWORD)this->pTypes[i]);
@@ -180,9 +203,9 @@ namespace rage {
 				}
 
 			}
-			libertyFourXYZ::g_memory_manager.release(this->pEntries);
-			libertyFourXYZ::g_memory_manager.release(this->pTypes);
-			libertyFourXYZ::g_memory_manager.release(this->pEntriesHashes);
+			dealloc_arr(this->pEntries);
+			dealloc_arr(this->pTypes);
+			dealloc_arr(this->pEntriesHashes);
 		}
 	}
 
@@ -282,10 +305,10 @@ namespace rage {
 		}
 	}
 
-	void grmShader::place(datResource* pRsc, pgDictionary<grcTexturePC>* pTxdDict) {
+	void grmShader::place(datResource* pRsc) {
 		pgBase::place(pRsc);
 
-		this->m_instanceData.place(pRsc, pTxdDict);
+		this->m_instanceData.place(pRsc);
 	}
 
 	grmShader::grmShader() {
@@ -320,8 +343,8 @@ namespace rage {
 		this->m_instanceData.setRefCount();
 	}
 
-	void grmShaderFx::place(datResource* pRsc, pgDictionary<grcTexturePC>* pTxdDict) {
-		grmShader::place(pRsc, pTxdDict);
+	void grmShaderFx::place(datResource* pRsc) {
+		grmShader::place(pRsc);
 		if(this->m_pszName)
 			this->m_pszName.place(pRsc);
 		if(this->m_pszPresetName)
@@ -372,14 +395,14 @@ namespace rage {
 
 		if (this->m_pTexture) {
 			auto origTxd = pRsc->getFixup(this->m_pTexture, sizeof(*this->m_pTexture));
-			this->m_pTexture = libertyFourXYZ::g_memory_manager.allocate<pgDictionary<grcTexturePC>>("shaderGroup, place, txd");
+			this->m_pTexture = new("shaderGroup, place, txd") pgDictionary<grcTexturePC>;
 			copy_class(this->m_pTexture, origTxd);
 			this->m_pTexture->place(pRsc);
 			
 			//this->m_pTexture.place(pRsc);
 		}
 		if (this->m_shaders.m_count)
-			this->m_shaders.place_1ptr(pRsc, this->m_pTexture);
+			this->m_shaders.place(pRsc);
 		if (this->m_vertexFormat.m_count)
 			this->m_indexMapping.place(pRsc);
 		if (this->m_indexMapping.m_count)
@@ -391,9 +414,9 @@ namespace rage {
 	}
 
 	grmShaderGroup::~grmShaderGroup() {
-		this->m_shaders.~atArray(); // ToDo: fix
+		//this->m_shaders.~atArray(); // ToDo: fix
 		if (this->m_pTexture)
-			libertyFourXYZ::g_memory_manager.release(this->m_pTexture);
+			dealloc(this->m_pTexture);
 	}
 
 	void grmShaderGroup::addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth) {

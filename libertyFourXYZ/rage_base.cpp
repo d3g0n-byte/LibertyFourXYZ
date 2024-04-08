@@ -18,11 +18,11 @@ namespace rage {
 
 	}
 
-	void pgBase::allocatePageMap() { this->m_pPageMap = libertyFourXYZ::g_memory_manager.allocate<rage::pgBasePageMap>("allocatePageMap"); }
+	void pgBase::allocatePageMap() { this->m_pPageMap = new ("allocatePageMap") rage::pgBasePageMap(); }
 
 	void pgBase::replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth) {
 		if (dwDepth || !libertyFourXYZ::g_bUsePageMap) {
-			if (this->m_pPageMap) libertyFourXYZ::g_memory_manager.release<rage::pgBasePageMap>(this->m_pPageMap);
+			if (this->m_pPageMap) dealloc(this->m_pPageMap);
 		}
 		else {
 			this->m_pPageMap->fillMap(pRsc);
@@ -34,7 +34,7 @@ namespace rage {
 
 	void pgBase::addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth) {
 		if (dwDepth) {
-			if (this->m_pPageMap) libertyFourXYZ::g_memory_manager.release<rage::pgBasePageMap>(this->m_pPageMap);
+			if (this->m_pPageMap) dealloc(this->m_pPageMap);
 		}
 		else {
 			if (!this->m_pPageMap) this->allocatePageMap();
@@ -47,7 +47,6 @@ namespace rage {
 	
 	void pgBase::place(rage::datResource* rsc) {
 		this->m_pPageMap = NULL;
-		//error("[rage::pgBase::place] Not implemented. Please don't use it");
 	}
 
 	void pgBase::clearRefCount() {
@@ -60,17 +59,17 @@ namespace rage {
 
 	pgBase::~pgBase() {
 		if (this->m_pPageMap)
-			libertyFourXYZ::g_memory_manager.release<rage::pgBasePageMap>(this->m_pPageMap);
+			dealloc(this->m_pPageMap);
 	}
 
 	void pgBaseRefCounted::clearRefCount() {
 		pgBase::clearRefCount();
-		this->m_dwRefCount = 0;
+		this->m_usageCount = 0;
 	}
 
 	void pgBaseRefCounted::setRefCount() {
 		pgBase::setRefCount();
-		this->m_dwRefCount++;
+		this->m_usageCount++;
 	}
 
 }

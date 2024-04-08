@@ -9,9 +9,8 @@ namespace rage {
 
 
 	void ConstString::destroy() {
-		if (this->pszString) {
-			libertyFourXYZ::g_memory_manager.release<char>((char*&)this->pszString); // проверить
-		}
+		if (this->pszString)
+			dealloc_arr((char*&)this->pszString); // проверить
 	}
 
 	ConstString::~ConstString() { this->destroy(); }
@@ -21,17 +20,17 @@ namespace rage {
 		//this->~ConstString();
 		if (pszStr == NULL) { this->pszString = NULL; return; }
 		DWORD dwSize = strlen(pszStr) + 1;
-		this->pszString = libertyFourXYZ::g_memory_manager.allocate<char>("rage_conststr, new1", dwSize);
+		this->pszString = new("rage_conststr, new1")const char [dwSize]();
 		strcpy((char*)this->pszString, pszStr);
 	}
 
 	void ConstString::resize(DWORD dwNewSize) {
-		auto pszOld = this->pszString;
+		char* pszOld = (char*)this->pszString;
 		DWORD dwOldSize = this->length();
-		this->pszString = libertyFourXYZ::g_memory_manager.allocate<char>("rage_conststr, resize", dwNewSize + 1);
+		this->pszString = new("rage_conststr, resize")const char [dwNewSize + 1]();
 		memset((char*)this->pszString, 0x0, dwNewSize + 1);
 		memcpy((char*)this->pszString, pszOld, dwNewSize > dwOldSize ? dwOldSize : dwNewSize);
-		libertyFourXYZ::g_memory_manager.release<char>((char*&)pszOld);
+		dealloc_arr(pszOld);
 	}
 
 	ConstString::ConstString(const ConstString& copy) : pszString(NULL) {
@@ -47,7 +46,7 @@ namespace rage {
 		if (pszStr == NULL) { this->pszString = NULL; return; }
 
 		DWORD dwSize = strlen(pszStr) + 1;
-		this->pszString = libertyFourXYZ::g_memory_manager.allocate<char>("rage_conststr, new2", dwSize);
+		this->pszString = new("rage_conststr, new2") const char [dwSize]();
 		strcpy((char*)this->pszString, (char*)pszStr);
 	}
 
@@ -72,24 +71,8 @@ namespace rage {
 		
 		ConstString ret = this->pszString;
 		ret.resize(index);
-		//ret = libertyFourXYZ::g_memory_manager.allocate<const char>("conststr, getfilepath", index + 1);
-		//ret[index] = '\0'; // t
-		//strncpy((char*)ret.pszString, this->pszString, index);
 
 		return ret;
-
-		//// To-Do: переделать
-		//__int64 dwSlash = -1;
-		//char slash;
-		//for (DWORD i = 0; i < this->length(); i++) if (this->pszString[i] == '/' || this->pszString[i] == '\\') { dwSlash = i; slash = this->pszString[i]; }
-		//rage::ConstString pszRet;
-		//if (dwSlash != -1) {
-		//	(*this)[dwSlash] = '\0';
-		//	pszRet = rage::ConstString(this->pszString);
-		//	(*this)[dwSlash] = slash;
-		//}
-		//else pszRet = rage::ConstString(this->pszString);
-		//return pszRet;
 	}
 
 	ConstString ConstString::getFileNameWithoutExt() {
@@ -99,23 +82,6 @@ namespace rage {
 		
 		ret.resize(index);
 		return ret;
-
-
-
-		//rage::ConstString tmp = this->getFileName();
-
-		//// To-Do: перделать
-		//int dwDot = -1;
-		//for (DWORD i = 0; i < tmp.length(); i++) if (tmp.c_str()[i] == '.') dwDot = i;
-		//if (dwDot == -1) return this->c_str();
-
-		//char* chars = (char*)tmp.c_str();
-		//chars[dwDot] = '\0';
-		//rage::ConstString retVal = chars;
-		//chars[dwDot] = '.';
-
-		//return retVal;
-
 	}
 
 	ConstString::operator const char* () const { return this->pszString; }
@@ -137,7 +103,7 @@ namespace rage {
 		if (psz == NULL) { this->pszString = NULL; return *this; }
 
 		DWORD dwSize = strlen(psz) + 1;
-		this->pszString = libertyFourXYZ::g_memory_manager.allocate<char>("rage_conststr, op=1", dwSize);
+		this->pszString = new("rage_conststr, op=1")const char [dwSize]();
 		strcpy((char*)this->pszString, (char*)psz);
 
 		return (ConstString&)*this;
@@ -147,7 +113,7 @@ namespace rage {
 		this->~ConstString();
 
 		if (psz.length()) {
-			this->pszString = libertyFourXYZ::g_memory_manager.allocate<char>("rage_conststr, op=2", psz.length() + 1);
+			this->pszString = new("rage_conststr, op=2") const char [psz.length() + 1]();
 			strcpy((char*)this->pszString, psz.pszString);
 		}
 
@@ -216,7 +182,7 @@ namespace rage {
 		DWORD dwSize = strlen(tmpString) + 1;
 		tmpString = pRsc->getFixup<const char>(this->pszString, dwSize); // for check bounds
 
-		this->pszString = libertyFourXYZ::g_memory_manager.allocate<char>("rage_conststr, place", dwSize);
+		this->pszString = new("rage_conststr, place")const char[dwSize]();
 		strcpy((char*)this->pszString, (char*)tmpString);
 	}
 

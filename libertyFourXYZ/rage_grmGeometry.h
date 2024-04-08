@@ -2,7 +2,7 @@
 #include "rage_base.h"
 #include "rage_array.h"
 
-namespace rage { class grcVertexBufferD11; class grcIndexBufferD11; }
+namespace rage { class grcVertexBufferD3D; class grcIndexBufferD3D; }
 
 namespace rage {
 
@@ -28,14 +28,15 @@ namespace rage {
 
 	class grmGeometryQB : public rage::grmGeometry {
 	public:
-		rage::atRangeArray<rage::datOwner<rage::grcVertexBufferD11>, 4> m_vertexBuffers;
-		rage::atRangeArray<rage::datOwner<rage::grcIndexBufferD11>, 4> m_indexBuffers;
+		rage::atRangeArray<rage::datOwner<rage::grcVertexBufferD3D>, 4> m_vertexBuffers;
+		rage::atRangeArray<rage::datOwner<rage::grcIndexBufferD3D>, 4> m_indexBuffers;
 		DWORD m_dwIndexCount;
 		DWORD m_dwFaceCount;
 		WORD m_wVertexCount;
-		BYTE m_nbIndicesPerFace;
-		bool m_bDoubleBuffered;
-		WORD* m_pawBoneMapping; // вертекс указывает индекс к реальных костям, но делает через этот массив. Не для фрагментных файлах
+		WORD m_wIndicesPerFace;
+		//BYTE m_nbIndicesPerFace;
+		//bool m_bDoubleBuffered;
+		WORD* m_pBoneMapping; // вертекс указывает индекс к реальных костям, но делает через этот массив. Не для фрагментных файлах
 		WORD m_wStride;
 		WORD m_wBoneCount;
 		void* _InstanceVertexDeclarationD3D;

@@ -6,6 +6,8 @@
 
 #include "rsc85_layout.h"
 
+#include "utils.h"
+
 namespace rage {
 
 
@@ -103,26 +105,39 @@ namespace rage {
 		BYTE* pDataStart;			// +4
 		DWORD _f8;
 		BYTE* pAllocatedVPages;	// this->pAllocatedVPages = chunks[nbRootVirtualChunk]
-		rage::datResourceChunk chunks[128];		// +10
+		datResourceChunk chunks[128];		// +10
 
 		void fillMap(BYTE* pRawResource);
-		void generateMap(rage::datResourceInfoOld* resInfo);
-		void generateMap(rage::datResourceInfo* resInfo);
-		void validateMap(rage::datResourceInfo* pInfo);
+		void generateMap(datResourceInfoOld* resInfo);
+		void generateMap(datResourceInfo* resInfo);
+		void validateMap(datResourceInfo* pInfo);
 
 	};
 
 	class datResource {
+		void* _placeObj(void* pObj, void* ragePtr, __int64 size);
+	
 	public:
-		rage::datResourceMap* m_pMap;
-		rage::datResource* m_pNext;
-		rage::ConstString m_pszDebugName;
+		datResourceMap* m_pMap;
+		datResource* m_pNext;
+		ConstString m_pszDebugName;
 		bool m_bWasDefrag;
 		BYTE __d[0x3]; // padding
 
+		// 
+		struct {
+			rage::grcArray<void*>* m_pRagePtr;
+			rage::grcArray<void*>* m_pRealPtr;
+		} helper;
+
 		datResource(const char* pszDebugName);
-		datResource();
+		//datResource();
 		~datResource();
+
+		// return NULL if not have or real ptr to obj
+		void* checkPtrForDuplicate(void* ragePtr);
+		void addPtrForDuplicate(void* ragePtr, void* realPtr);
+
 
 		void saveRawResource(const char* pszPath, const char* pszName, bool bUseSysGfx);
 		void saveResource(const char* pszPath, const char* pszName, const char *pszExt, DWORD dwVersion, datResourceInfo * pResInfo, BYTE nbCompressionIndex);
@@ -162,6 +177,30 @@ namespace rage {
 
 			error("[datResource::getFixup] Resource '%s': Invalid fixup, address 0x%p is neither virtual nor physical", this->m_pszDebugName, ptr);
 			return NULL;
+		}
+
+		// only for structures with 'm_usageCount'
+		template <typename _Type>void fixupAndPlaceObj(_Type*& pObj, unsigned __int64 size = sizeof(_Type)) {
+			if (void* result = checkPtrForDuplicate(pObj)) {
+				pObj = (_Type*)result;
+				pObj->m_usageCount++;
+			}
+			else {
+				_Type* old = pObj;
+			
+				auto tmp = getFixup(pObj, size);
+				pObj = new("datRes, fixupAndPlaceObj")_Type;
+
+				addPtrForDuplicate(old, pObj);
+
+				copy_class(pObj, tmp);
+				
+				pObj->m_usageCount = 1;
+
+				if constexpr (helpers::hasPlace<_Type>)
+					pObj->place(this);
+			}
+
 		}
 
 	};

@@ -10,66 +10,42 @@ const int g_addNumBonesToBones = 1;
 
 namespace rage {
 
-	float crSkeletonData::calcAuthoredOffset(int nBoneId, rage::Vector3& a3) {
-		rage::Matrix34* v3 = &this->m_pBoneLocalTransforms[nBoneId];
-		rage::Vector2 v4; v4.x = v3->d.x; v4.y = v3->d.y;
-		float result = v3->d.z;
-		a3.x = v4.x; a3.y = v4.y; //*(__int64*)&a3.x = *(__int64*)&v4
-		a3.z = result;
-		a3.w = v3->d.w;
-
-		//if (nBoneId >= 1 && !this->m_dwFlags.bAuthoredOrientation) {
-		//    rage::Matrix34* m_pCumulativeInverseJointScaleOrients = this->m_pBoneWorldOrientInverted.pElement;
-		//    rage::Vector2 *v7 = (rage::Vector2*)&m_pCumulativeInverseJointScaleOrients[this->m_pParentBoneIndices[nBoneId]];
-		//    if (!m_pCumulativeInverseJointScaleOrients) // if(!this->dwFlags.bHaveBoneWorldOrient)
-		//        v7 = (float32x2_t*)0x714F190520LL;
-		//    v8 = vadd_f32(
-		//        v7[6],
-		//        vadd_f32(
-		//            vadd_f32(vmul_n_f32((float32x2_t)v7->n64_u64[0], v4.n64_f32[0]), vmul_lane_f32(v7[2], v4, 1)),
-		//            vmul_n_f32(v7[4], result))).n64_u64[0];
-		//    v9 = (float)(vmuls_n_f32(v7[1].n64_f32[0], v4.n64_f32[0]) + vmuls_lane_f32(v7[3].n64_f32[0], v4, 1))
-		//        + (float)(result * v7[5].n64_f32[0]);
-		//    v10 = v7[7].n64_f32[0];
-		//    *(_QWORD*)&a3->x = v8;
-		//    result = v10 + v9;
-		//    a3->z = result;
-		//}
-
-		return 0;
-
-	}
 
 	void crSkeletonData::place(rage::datResource* rsc) {
-		//crSkeletonData* realPtr = rsc->getFixup<rage::crSkeletonData>(ptr, sizeof(*this));
-		//memcpy(this, realPtr, sizeof(*this));
-
-
-		//if (!rsc->getFixup<rage::crBoneData>(this->m_pBones.pElement, sizeof(*this->m_pBones.pElement) * this->m_wNumBones))
-		//	return;
 
 		crBoneData* pBones = rsc->getFixup<rage::crBoneData>(this->m_pBones.pElement, sizeof(*this->m_pBones.pElement) * this->m_wNumBones);
-		this->m_pBones.pElement = libertyFourXYZ::g_memory_manager.allocate<crBoneData>("skel::place, bones", this->m_wNumBones);
+		this->m_pBones.pElement = new("skel::place, bones") crBoneData[this->m_wNumBones];
 		memcpy(this->m_pBones.pElement, pBones, sizeof(*this->m_pBones.pElement) * this->m_wNumBones);
 		for (WORD i = 0; i < this->m_wNumBones; i++)
 			this->m_pBones[i].place(rsc);
 		
 		DWORD *pParentIndex = rsc->getFixup(this->m_pParentBoneIndices.pElement, sizeof(DWORD) * this->m_wNumBones);
-		this->m_pParentBoneIndices.pElement = libertyFourXYZ::g_memory_manager.allocate<DWORD>("skel::place, parent index", this->m_wNumBones);
+		this->m_pParentBoneIndices.pElement = new("skel::place, parent index") DWORD[this->m_wNumBones];
 		memcpy(this->m_pParentBoneIndices.pElement, pParentIndex, sizeof(*this->m_pParentBoneIndices.pElement) * this->m_wNumBones);
 
 		if (this->bHaveBoneWorldOrient) {
+			Matrix34* pOrient = rsc->getFixup(this->m_pBoneWorldOrient.pElement, sizeof(Matrix34) * this->m_wNumBones);
+			Matrix34* pOrientInverted = rsc->getFixup(this->m_pBoneWorldOrientInverted.pElement, sizeof(Matrix34) * this->m_wNumBones);
+			
+			this->m_pBoneWorldOrient.pElement = new("skel::place, orient") Matrix34[this->m_wNumBones];
+			memcpy(this->m_pBoneWorldOrient.pElement, pOrient, sizeof(*this->m_pBoneWorldOrient.pElement) * this->m_wNumBones);
+
+			this->m_pBoneWorldOrientInverted.pElement = new("skel::place, invert orient")Matrix34[this->m_wNumBones];
+			memcpy(this->m_pBoneWorldOrientInverted.pElement, pOrientInverted, sizeof(*this->m_pBoneWorldOrientInverted.pElement) * this->m_wNumBones);
+			/*
 			Matrix34* pOrients = rsc->getFixup(this->m_pBoneWorldOrientInverted.pElement, sizeof(Matrix34) * this->m_wNumBones * 2);
 			if ((size_t)this->m_pBoneWorldOrient.pElement - (size_t)this->m_pBoneWorldOrientInverted.pElement != sizeof(Matrix34) * this->m_wNumBones) {
-				error("[crSkeletonData] this->bHaveBoneWorldOrient is not valid");
+				int num = (size_t)this->m_pBoneWorldOrient.pElement - (size_t)this->m_pBoneWorldOrientInverted.pElement;
+				error("[crSkeletonData] this->bHaveBoneWorldOrient is not valid, %i != %i", num, sizeof(Matrix34) * this->m_wNumBones);
 				return;
 			}
 
-			this->m_pBoneWorldOrientInverted.pElement = libertyFourXYZ::g_memory_manager.allocate<Matrix34>("skel::place, invert orient", this->m_wNumBones);
+			this->m_pBoneWorldOrientInverted.pElement = new("skel::place, invert orient")Matrix34[this->m_wNumBones];
 			memcpy(this->m_pBoneWorldOrientInverted.pElement, pOrients, sizeof(*this->m_pBoneWorldOrientInverted.pElement) * this->m_wNumBones);
 
-			this->m_pBoneWorldOrient.pElement = libertyFourXYZ::g_memory_manager.allocate<Matrix34>("skel::place, orient", this->m_wNumBones);
+			this->m_pBoneWorldOrient.pElement = new("skel::place, orient") Matrix34[this->m_wNumBones];
 			memcpy(this->m_pBoneWorldOrient.pElement, pOrients + this->m_wNumBones, sizeof(*this->m_pBoneWorldOrient.pElement) * this->m_wNumBones);
+			*/
 		}
 		else {
 			this->m_pBoneWorldOrient.pElement = NULL;
@@ -78,7 +54,7 @@ namespace rage {
 
 		Matrix34* pPos = rsc->getFixup(this->m_pBoneLocalTransforms.pElement, sizeof(Matrix34) * this->m_wNumBones);
 	
-		this->m_pBoneLocalTransforms.pElement = libertyFourXYZ::g_memory_manager.allocate<Matrix34>("skel::place, transform", this->m_wNumBones);
+		this->m_pBoneLocalTransforms.pElement = new("skel::place, transform")Matrix34[this->m_wNumBones];
 		memcpy(this->m_pBoneLocalTransforms.pElement, pPos, sizeof(*this->m_pBoneLocalTransforms.pElement) * this->m_wNumBones);
 
 		if (bHaveBoneMappings) {
@@ -104,32 +80,44 @@ namespace rage {
 		this->m_wRotLockCount = 0;
 		this->m_wScaleLockCount = 0;
 		this->m_dwFlags = 0;
-		this->m_dwUsageCount = 1;
+		this->m_usageCount = 1;
 		this->m_dwCrc = 0;
 		//this->m_jointData = NULL;
 	}
 
 	crSkeletonData::~crSkeletonData() {
 		if (this->m_pBones.pElement)
-			libertyFourXYZ::g_memory_manager.release(this->m_pBones.pElement);
+			dealloc_arr(this->m_pBones.pElement);
 		if (this->m_pParentBoneIndices.pElement)
-			libertyFourXYZ::g_memory_manager.release(this->m_pParentBoneIndices.pElement);
+			dealloc_arr(this->m_pParentBoneIndices.pElement);
 		if (this->bHaveBoneWorldOrient) {
-			libertyFourXYZ::g_memory_manager.release(this->m_pBoneWorldOrient.pElement);
-			libertyFourXYZ::g_memory_manager.release(this->m_pBoneWorldOrientInverted.pElement);
+			dealloc_arr(this->m_pBoneWorldOrient.pElement);
+			dealloc_arr(this->m_pBoneWorldOrientInverted.pElement);
 		}
 		if (this->m_pBoneLocalTransforms.pElement)
-			libertyFourXYZ::g_memory_manager.release(this->m_pBoneLocalTransforms.pElement);
+			dealloc_arr(this->m_pBoneLocalTransforms.pElement);
 		this->m_wNumBones = 0;
 		this->m_wTransLockCount = 0;
 		this->m_wRotLockCount = 0;
 		this->m_wScaleLockCount = 0;
 		this->m_dwFlags = 0;
-		this->m_dwUsageCount = 0;
+		this->m_usageCount = 0;
 		this->m_dwCrc = 0;
 		//if (this->m_jointData)
 		//	libertyFourXYZ::g_memory_manager.release(this->m_jointData);
 	}
+
+	void crSkeletonData::generateCrc() {
+		m_dwCrc = 0;
+		DWORD data[2];
+		for (WORD i = 0; i < m_wNumBones; i++) {
+			data[0] = m_pBones[i].m_dwFlags;
+			data[1] = m_pBones[i].m_wId;
+			m_dwCrc = crc_z(m_dwCrc, (BYTE*)data, 8);
+		}
+
+	}
+
 
 	void crSkeletonData::addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth) {
 		if (g_addNumBonesToBones)
@@ -172,13 +160,6 @@ namespace rage {
 			if(i == this->m_pParentBoneIndices[i + 1])
 				this->m_pBones[i].m_pChild = this->m_pBones.pElement + (i + 1);
 
-
-			//for (WORD j = i + 1; j < this->m_wNumBones; j++)
-			//	if (i == this->m_pParentBoneIndices[j]) {
-			//		this->m_pBones[i].m_pChild = this->m_pBones.pElement + j;
-			//		break;
-			//	}
-
 		// next
 		for (WORD i = 1; i < this->m_wNumBones; i++)
 			for (WORD j = i + 1; j < this->m_wNumBones; j++)
@@ -208,14 +189,13 @@ namespace rage {
 				*pVal = ptr + dwOffset;
 				
 			}
-
 		}
-
 	}
 
 	void crSkeletonData::replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth) {
 
 		this->buildHierarchy();
+		generateCrc();
 
 		for (WORD i = 0; i < this->m_wNumBones; i++)
 			this->m_pBones[i].replacePtrs(pLayout, pRsc, dwDepth + 1);
@@ -267,10 +247,10 @@ namespace rage {
 	}
 
 	void crSkeletonData::clearRefCount() {
-		this->m_dwUsageCount = 0;
+		this->m_usageCount = 0;
 	}
 
 	void crSkeletonData::setRefCount() {
-		this->m_dwUsageCount++;
+		this->m_usageCount++;
 	}
 }

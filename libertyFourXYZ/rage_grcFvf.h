@@ -6,48 +6,53 @@ namespace rage { class datResource; }
 namespace libertyFourXYZ { class rsc85_layout; };
 
 namespace rage {
+	enum grcFvfChannels : DWORD {
+		fvfPosition = 0,
+		fvfWeight = 1,
+		fvfBinding = 2,
+		fvfNormal = 3,
+		fvfDiffuse = 4,
+		fvfSpecular = 5,
+		fvfTexture0 = 6,
+		fvfTexture1 = 7,
+		fvfTexture2 = 8,
+		fvfTexture3 = 9,
+		fvfTexture4 = 0xa,
+		fvfTexture5 = 0xb,
+		fvfTexture6 = 0xc,
+		fvfTexture7 = 0xd,
+		fvfTangent0 = 0xe,
+		fvfTangent1 = 0xf,
+		fvfBinormal0 = 0x10,
+		fvfBinormal1 = 0x11
+	};
+
+	enum grcDataType : unsigned __int64 {
+		fvfHalf = 0, // unused in iv pc
+		fvfHalf2 = 1,
+		fvfHalf3 = 2, // unused in iv pc
+		fvfHalf4 = 3,
+		fvfFloat = 4,
+		fvfFloat2 = 5,
+		fvfFloat3 = 6,
+		fvfFloat4 = 7,
+		fvfUBYTE4 = 8,
+		fvfColor = 9,
+		fvfDec3n = 0xa, // unused in iv pc
+		fvfunk1 = 0xb, // variation for ps3
+		fvfunk2 = 0xc, // variation for ps3
+		fvfunk3 = 0xd, // variation for ps3
+		fvfShort2 = 0xe, // used in rdr terrain
+		fvfShort4 = 0xf
+	};
+
+
 	class grcFvf {
 	public:
-		enum grcFvfChannels : DWORD {
-			grcfcPosition = 0,
-			grcfcWeight = 1,
-			grcfcBinding = 2,
-			grcfcNormal = 3,
-			grcfcDiffuse = 4,
-			grcfcSpecular = 5,
-			grcfcTexture0 = 6,
-			grcfcTexture1 = 7,
-			grcfcTexture2 = 8,
-			grcfcTexture3 = 9,
-			grcfcTexture4 = 0xa,
-			grcfcTexture5 = 0xb,
-			grcfcTexture6 = 0xc,
-			grcfcTexture7 = 0xd,
-			grcfcTangent0 = 0xe,
-			grcfcTangent1 = 0xf,
-			grcfcBinormal0 = 0x10,
-			grcfcBinormal1 = 0x11
-		};
+		static const DWORD s_TypeSizes[/*0x10*/];
+		static const grcFvfChannels s_DynamicOrder[/*0x12*/];
 
-		enum grcDataSize : unsigned __int64 {
-			grcdsHalf = 0,
-			grcdsHalf2 = 1,
-			grcdsHalf3 = 2,
-			grcdsHalf4 = 3,
-			grcdsFloat = 4,
-			grcdsFloat2 = 5,
-			grcdsFloat3 = 6,
-			grcdsFloat4 = 7,
-			grcdsUBYTE4 = 8,
-			grcdsColor = 9,
-			grcdsPackedNormal = 0xa,
-			unk1 = 0xb, // variation for ps3
-			unk2 = 0xc, // variation for ps3
-			unk3 = 0xd, // variation for ps3
-			grcdsShort2 = 0xe, // used in rdr terrain
-			grcdsShort4 = 0xf
-		};
-
+		// in iv and mcla there is info about 8 channels of tangents and binormals. I don't use them yet
 		union {
 			struct {
 				DWORD m_bPosition : 1;
@@ -71,44 +76,44 @@ namespace rage {
 				DWORD _f18 : 14;
 			};
 			DWORD dwVal;
-		} m_fvf;						// The fvf channels currently used.  Could be u16 now.
-		BYTE m_nbFvfSize;				// The total size for this entire fvf
+		} m_UsedElements;
+		BYTE m_nbTotalSize;
 		union {
 			struct {
-				BYTE bPretransformed : 1;	// ?
+				BYTE bPretransformed : 1;
 				BYTE unk : 7;
 			};
 			BYTE nbVal;
-		} m_nbFlags;					// Various flags to use (i.e. transformed positions, etc.)
-		BYTE m_bDynamicOrder;			// This vertex format is in padded dynamic order instead of the standard order
-		BYTE m_nbChannelCount;
+		} m_nbFlags;
+		BYTE m_bDynamicOrder;			// see iv_pc_wdr for example usage
+		BYTE m_nbElementCount;
 		union {
 			struct {
-				grcDataSize m_ePositionType : 4;
-				grcDataSize m_eBlendWeightType : 4;
-				grcDataSize m_eBlendIndicesType : 4;
-				grcDataSize m_eNormalType : 4;
-				grcDataSize m_eColorType : 4;
-				grcDataSize m_eSpecularColorType : 4;
-				grcDataSize m_eTexCoord1Type : 4;
-				grcDataSize m_eTexCoord2Type : 4;
-				grcDataSize m_eTexCoord3Type : 4;
-				grcDataSize m_eTexCoord4Type : 4;
-				grcDataSize m_eTexCoord5Type : 4;
-				grcDataSize m_eTexCoord6Type : 4;
-				grcDataSize m_eTexCoord7Type : 4;
-				grcDataSize m_eTexCoord8Type : 4;
-				grcDataSize m_eTangentType : 4; // тип касательных
-				grcDataSize m_eBinormalType : 4; // тип бинормалов
+				grcDataType m_ePositionType : 4;
+				grcDataType m_eBlendWeightType : 4;
+				grcDataType m_eBlendIndicesType : 4;
+				grcDataType m_eNormalType : 4;
+				grcDataType m_eColorType : 4;
+				grcDataType m_eSpecularColorType : 4;
+				grcDataType m_eTexCoord1Type : 4;
+				grcDataType m_eTexCoord2Type : 4;
+				grcDataType m_eTexCoord3Type : 4;
+				grcDataType m_eTexCoord4Type : 4;
+				grcDataType m_eTexCoord5Type : 4;
+				grcDataType m_eTexCoord6Type : 4;
+				grcDataType m_eTexCoord7Type : 4;
+				grcDataType m_eTexCoord8Type : 4;
+				grcDataType m_eTangentType : 4; // one type for all channels
+				grcDataType m_eBinormalType : 4; // one type for all channels
 			};
 			unsigned __int64 qwVal;
-		} m_fvfChannelSizes;
+		} m_Types;
 
-		DWORD getSize(rage::grcFvf::grcFvfChannels channel);
-		DWORD getDynamicDataSizeType(rage::grcFvf::grcFvfChannels channel);
-		DWORD getOffset(rage::grcFvf::grcFvfChannels channel);
-		bool getChannelIsInUsed(rage::grcFvf::grcFvfChannels channel);
-		grcFvf::grcDataSize getChannelType(rage::grcFvf::grcFvfChannels channel);
+		DWORD getSize(grcFvfChannels channel);
+		DWORD getDynamicDataSizeType(grcFvfChannels channel);
+		DWORD getOffset(grcFvfChannels channel);
+		bool getChannelIsInUsed(grcFvfChannels channel);
+		grcDataType getChannelType(grcFvfChannels channel);
 		void recomputeTotalSize();
 
 		grcFvf();
@@ -122,9 +127,8 @@ namespace rage {
 
 	};
 
-	extern const DWORD sm_TypeSizes[0x10];
-	extern const rage::grcFvf::grcFvfChannels s_DynamicOrder[0x12];
-	// должно быть в rage::grcFvf
+	//extern const DWORD sm_TypeSizes[0x10];
+	//extern const grcFvfChannels s_DynamicOrder[0x12];
 
 
 }

@@ -13,7 +13,7 @@ namespace rage {
 
 		if (this->m_pShaderGroup) {
 			auto realShaders = pRsc->getFixup(this->m_pShaderGroup, sizeof(*this->m_pShaderGroup));
-			this->m_pShaderGroup = libertyFourXYZ::g_memory_manager.allocate<rage::grmShaderGroup>("drawableBase, place, shaders" );
+			this->m_pShaderGroup = new("drawableBase, place, shaders")grmShaderGroup;
 			copy_class(this->m_pShaderGroup, realShaders);
 			this->m_pShaderGroup->place(pRsc);
 		}
@@ -26,7 +26,7 @@ namespace rage {
 
 	rmcDrawableBase::~rmcDrawableBase() {
 		if (this->m_pShaderGroup)
-			libertyFourXYZ::g_memory_manager.release(this->m_pShaderGroup);
+			dealloc(this->m_pShaderGroup);
 	}
 
 	void rmcDrawableBase::addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth) {
@@ -64,10 +64,12 @@ namespace rage {
 	void rmcDrawable::place(datResource* pRsc) {
 		rmcDrawableBase::place(pRsc);
 		if (this->m_pSkeleton) {
-			auto realSkel = pRsc->getFixup(this->m_pSkeleton, sizeof(*this->m_pSkeleton));
-			this->m_pSkeleton = libertyFourXYZ::g_memory_manager.allocate<rage::crSkeletonData>("drawable, place, skel");
-			copy_class(this->m_pSkeleton, realSkel);
-			this->m_pSkeleton->place(pRsc);
+			pRsc->fixupAndPlaceObj(m_pSkeleton);
+
+			//auto realSkel = pRsc->getFixup(this->m_pSkeleton, sizeof(*this->m_pSkeleton));
+			//this->m_pSkeleton = new("drawable, place, skel")crSkeletonData;
+			//copy_class(this->m_pSkeleton, realSkel);
+			//this->m_pSkeleton->place(pRsc);
 		}
 		this->m_lodgroup.place(pRsc);
 	}
@@ -76,7 +78,7 @@ namespace rage {
 	
 	rmcDrawable::~rmcDrawable() {
 		if(this->m_pSkeleton)
-			libertyFourXYZ::g_memory_manager.release(this->m_pSkeleton);
+			dealloc(this->m_pSkeleton);
 		for (BYTE i = 0; i < 4; i++)
 			this->m_lodgroup.m_lod[i].~datOwner(); // ToDo: check
 	}
@@ -87,6 +89,7 @@ namespace rage {
 		if (this->m_pSkeleton) {
 			pLayout->addObject(this->m_pSkeleton, 5);
 			this->m_pSkeleton->addToLayout(pLayout, dwDepth + 1);
+		//	helpers::addObjectWithCounterToLayout(pLayout, 5, dwDepth + 1, m_pSkeleton);
 		}
 
 		this->m_lodgroup.addToLayout(pLayout, dwDepth);
@@ -101,6 +104,7 @@ namespace rage {
 			pLayout->setPtr(this->m_pSkeleton);
 			DWORD dwSize = sizeof * this->m_pSkeleton;
 			memcpy(pRsc->getFixup(this->m_pSkeleton, dwSize), origData, dwSize);
+		//	helpers::replacePtrsInObjWithCounter(pLayout, pRsc, dwDepth + 1, m_pSkeleton);
 		}
 		this->m_lodgroup.replacePtrs(pLayout, pRsc, dwDepth);
 	}

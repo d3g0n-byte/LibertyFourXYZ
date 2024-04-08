@@ -6,7 +6,7 @@ namespace rage {
 
 	class crBoneData {
 	public:
-		rage::ConstString m_pszName;
+		ConstString m_pszName;
 		union {
 			struct {
 				DWORD bLockRotXYZ : 1;
@@ -32,9 +32,9 @@ namespace rage {
 			};
 			DWORD m_dwFlags;
 		};
-		rage::crBoneData* m_pNext;
-		rage::crBoneData* m_pChild;
-		rage::crBoneData* m_pParent;
+		crBoneData* m_pNext;
+		crBoneData* m_pChild;
+		crBoneData* m_pParent;
 		WORD m_wIndex;
 		WORD m_wId;
 		WORD m_wMirrorIndex;
@@ -58,7 +58,7 @@ namespace rage {
 		DWORD _fd8;
 		DWORD _fdc;
 
-		crBoneData& operator=(crBoneData& bone);
+		//crBoneData& operator=(crBoneData& bone);
 		void place(rage::datResource* rsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
 		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);

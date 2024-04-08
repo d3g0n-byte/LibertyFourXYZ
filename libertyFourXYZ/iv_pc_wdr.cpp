@@ -27,69 +27,24 @@ namespace iv_pc_wdr {
 		rage::ConstString pszResName = pszFilePath.getFileNameWithoutExt();
 		rage::ConstString pszOutFile = rage::ConstString::format("%s/%s_new.wdr", pszFilePath.getFilePath(), pszFilePath.getFileNameWithoutExt());
 
-		rage::datResource* pResource = libertyFourXYZ::g_memory_manager.allocate<rage::datResource>("processWdr, pResource");
-		pResource->m_pszDebugName = pszResName;
-		rage::datResourceFileHeader* pResourceHeader = libertyFourXYZ::g_memory_manager.allocate<rage::datResourceFileHeader>("processWdr, pResourceHeader");
+		rage::datResource* pResource = new("processWdr, pResource") rage::datResource(pszResName);
+		rage::datResourceFileHeader* pResourceHeader = new ("processWdr, pResourceHeader") rage::datResourceFileHeader();
 		libertyFourXYZ::readRsc85Resource((char*)pszFilePath.c_str(), pResourceHeader, pResource);
 
 		//rage::crSkeletonData* pSkel = libertyFourXYZ::g_memory_manager.allocate<rage::crSkeletonData>();
-		gtaDrawable* pDrawable = libertyFourXYZ::g_memory_manager.allocate<gtaDrawable>("processWdr, pDrawable");
+		gtaDrawable* pDrawable = new("processWdr, pDrawable") gtaDrawable();
 		auto realPtr = pResource->getFixup((gtaDrawable*)(pResourceHeader->flags.getVBlockStart() + 0x50000000), sizeof(*pDrawable));
 
-		libertyFourXYZ::g_memory_manager.release(pResourceHeader);
+		dealloc(pResourceHeader);
 
 		copy_class<gtaDrawable>(pDrawable, realPtr);
 
 		pDrawable->place(pResource);
 		pDrawable->clearRefCount();
 
-		libertyFourXYZ::g_memory_manager.release(pResource);
+		dealloc(pResource);
 
-
-		/*
-		for (DWORD i = 0; i < pDrawable->m_pSkeleton->m_wNumBones; i++) trace("%s", pDrawable->m_pSkeleton->m_pBones[i].m_pszName);
-		for (DWORD i = 0; i < pDrawable->m_pShaderGroup->m_shaders.m_count; i++) {
-			auto shader = pDrawable->m_pShaderGroup->m_shaders.m_pElements[i].get();
-			trace("main info: version=%u, name=%s, preset=%s", (DWORD)shader->m_nbVersion, shader->m_pszName, shader->m_pszSps);
-			trace("params:");
-			for (DWORD j = 0; j < shader->m_effect.m_dwParameterCount; j++) {
-				auto param = shader->m_effect.m_ppParameters + j;
-				if (!param->pVec4) {
-					trace("\tNULL");
-				}
-				else if (shader->m_effect.m_pParameterTypes[j] == 0) {
-					if (param->txd.pTxdRef->m_nbResourceType == rage::eTextureResourceType::TEXTURE_REFERENCE)
-						trace("\ttype=grcTextureReference, size=%u, name=%s", 0, param->txd.pTxdRef->m_pszName);
-					else if (param->txd.pTxdRef->m_nbResourceType == rage::eTextureResourceType::TEXTURE) {
-						auto txd = param->txd.pTxd;
-						trace("\ttype=grcTexture, size=%u, name=%s, width=%u. height=%u, mips=%u, data_size=%u", 0, txd->m_pszName, (DWORD)txd->m_wWidth, (DWORD)txd->m_wHeight,
-							(DWORD)txd->m_nbLevels, txd->getPixelDataSize());
-					}
-				}
-				else {
-					DWORD dwArraySize = 1;
-					switch (shader->m_effect.m_pParameterTypes[i]) {
-					case 8:
-						dwArraySize = 6;
-						break;
-					case 1:
-					case 4:
-					case 14:
-					case 15:
-					case 16:
-						dwArraySize = shader->m_effect.m_pParameterTypes[i];
-						break;
-					}
-					trace("\ttype=Vector4_%u:", dwArraySize);
-					for (BYTE n = 0; n < dwArraySize; n++) {
-						rage::Vector4* pVec = param->pVec4 + n;
-						trace("\t\t%.8f;%.8f;%.8f;%.8f", pVec->x, pVec->y, pVec->z, pVec->w);
-					}
-				}
-			}
-		}
-		*/
-		libertyFourXYZ::rsc85_layout* pLayout = libertyFourXYZ::g_memory_manager.allocate<libertyFourXYZ::rsc85_layout>("rebuild wdr v110, rsc85 layout");
+		libertyFourXYZ::rsc85_layout* pLayout = new ("rebuild wdr v110, rsc85 layout") libertyFourXYZ::rsc85_layout();
 
 		// optimize gfx buffer
 		if (false){
@@ -113,54 +68,54 @@ namespace iv_pc_wdr {
 							bool bChanged = 0;
 							BYTE aChanged[18]{ 0 };
 							for (BYTE l = 0; l < 18; l++) {
-								int type = (declaration->m_fvfChannelSizes.qwVal >> (l * 4)) & 0xf;
-								if (type == declaration->grcdsFloat2) {
-									declaration->m_fvfChannelSizes.qwVal = setBits(declaration->m_fvfChannelSizes.qwVal, l * 4, declaration->grcdsHalf2, 4);
+								int type = (declaration->m_Types.qwVal >> (l * 4)) & 0xf;
+								if (type == grcDataType::fvfFloat2) {
+									declaration->m_Types.qwVal = setBits(declaration->m_Types.qwVal, l * 4, grcDataType::fvfHalf2, 4);
 									bChanged = 1;
 									aChanged[l] = 1;
 								}
-								else if (type == declaration->grcdsFloat3 || type == declaration->grcdsFloat4) {
-									declaration->m_fvfChannelSizes.qwVal = setBits(declaration->m_fvfChannelSizes.qwVal, l * 4, declaration->grcdsHalf4, 4);
+								else if (type == grcDataType::fvfFloat3 || type == grcDataType::fvfFloat4) {
+									declaration->m_Types.qwVal = setBits(declaration->m_Types.qwVal, l * 4, grcDataType::fvfHalf4, 4);
 									bChanged = 1;
 									aChanged[l] = 1;
 								}
 							}
 							if (bChanged) {
 								declaration->recomputeTotalSize();
-								DWORD dwNewMemSize = declaration->m_nbFvfSize * vertBuf->m_wVertexCount;
-								BYTE* pNewMem = libertyFourXYZ::g_memory_manager.allocate<BYTE>("processwdr, new verticles", dwNewMemSize);
+								DWORD dwNewMemSize = declaration->m_nbTotalSize * vertBuf->m_wVertexCount;
+								BYTE* pNewMem = new("processwdr, new verticles") BYTE[dwNewMemSize];
 
 								for (WORD l = 0; l < vertBuf->m_wVertexCount; l++) {
-									DWORD dwPosInOldBuf = l * oldDecl.m_nbFvfSize;
-									DWORD dwPosInNewBuf = l * declaration->m_nbFvfSize;
+									DWORD dwPosInOldBuf = l * oldDecl.m_nbTotalSize;
+									DWORD dwPosInNewBuf = l * declaration->m_nbTotalSize;
 									for (BYTE k = 0; k < 18; k++) {
-										if ((declaration->m_fvf.dwVal >> k) & 1) {
+										if ((declaration->m_UsedElements.dwVal >> k) & 1) {
 											if (!aChanged[k]) {
-												DWORD dwElementSize = oldDecl.getSize((rage::grcFvf::grcFvfChannels)k);
+												DWORD dwElementSize = oldDecl.getSize((rage::grcFvfChannels)k);
 												memcpy(pNewMem + dwPosInNewBuf, vertBuf->m_pVertexData.pElement + dwPosInOldBuf, dwElementSize);
 												dwPosInOldBuf += dwElementSize;
 												dwPosInNewBuf += dwElementSize;
 											}
 											else {
-												int type = (oldDecl.m_fvfChannelSizes.qwVal >> (k * 4)) & 0xf;
-												int newType = (declaration->m_fvfChannelSizes.qwVal >> (k * 4)) & 0xf;
+												int type = (oldDecl.m_Types.qwVal >> (k * 4)) & 0xf;
+												int newType = (declaration->m_Types.qwVal >> (k * 4)) & 0xf;
 												
-												if (type >= declaration->grcdsFloat && type <= declaration->grcdsFloat4 &&
-													newType >= declaration->grcdsHalf && newType <= declaration->grcdsHalf4) {
+												if (type >= grcDataType::fvfFloat && type <= grcDataType::fvfFloat4 &&
+													newType >= grcDataType::fvfHalf && newType <= grcDataType::fvfHalf4) {
 													rage::Vector4* pVec = (rage::Vector4*)(vertBuf->m_pVertexData.pElement + dwPosInOldBuf);
 													rage::Half4 float16_4(*pVec);
 
-													DWORD dwNewElementSize = rage::sm_TypeSizes[newType];
+													DWORD dwNewElementSize = rage::grcFvf::s_TypeSizes[newType];
 													memcpy(pNewMem + dwPosInNewBuf, &float16_4, dwNewElementSize);
-													dwPosInOldBuf += rage::sm_TypeSizes[type];
+													dwPosInOldBuf += rage::grcFvf::s_TypeSizes[type];
 													dwPosInNewBuf += dwNewElementSize;
 												}
 											}
 										}
 									}
 								}
-								geom->m_wStride = vertBuf->m_dwVertexSize = declaration->m_nbFvfSize;
-								libertyFourXYZ::g_memory_manager.release(vertBuf->m_pVertexData.pElement);
+								geom->m_wStride = vertBuf->m_dwVertexSize = declaration->m_nbTotalSize;
+								dealloc_arr(vertBuf->m_pVertexData.pElement);
 								vertBuf->m_pVertexData.pElement = pNewMem;
 							}
 						}
@@ -180,16 +135,16 @@ namespace iv_pc_wdr {
 					for (WORD n = 0; n < pDrawable->m_lodgroup.m_lod.m_elements[i].get()->m_models[j].get()->m_geometries.m_count; n++) {
 						auto geom = pDrawable->m_lodgroup.m_lod.m_elements[i].get()->m_models[j].get()->m_geometries[n].get();
 						
-						BYTE nbOldIndicesPerFace = geom->m_nbIndicesPerFace;
+						BYTE nbOldIndicesPerFace = geom->m_wIndicesPerFace;
 
-						geom->m_dwFaceCount = geom->m_dwIndexCount / geom->m_nbIndicesPerFace;
+						geom->m_dwFaceCount = geom->m_dwIndexCount / geom->m_wIndicesPerFace;
 
 						for (BYTE o = 0; o < 4; o++) {
 							if (!geom->m_indexBuffers[o].get()) continue;
 
 							auto idxBuf = geom->m_indexBuffers[o].get();
 
-							WORD *pNewData = libertyFourXYZ::g_memory_manager.allocate<WORD>("process wdr, new idxData", idxBuf->m_dwIndexCount / nbOldIndicesPerFace * nbNewIndicesPerFace);
+							WORD* pNewData = new ("process wdr, new idxData") WORD[idxBuf->m_dwIndexCount / nbOldIndicesPerFace * nbNewIndicesPerFace];
 
 							DWORD dwOldPos = 0;
 							DWORD dwNewPos = 0;
@@ -207,9 +162,9 @@ namespace iv_pc_wdr {
 
 							}
 
-							geom->m_nbIndicesPerFace = nbNewIndicesPerFace;
+							geom->m_wIndicesPerFace = nbNewIndicesPerFace;
 
-							libertyFourXYZ::g_memory_manager.release(idxBuf->m_pIndexData.pElement);
+							dealloc_arr(idxBuf->m_pIndexData.pElement);
 							idxBuf->m_pIndexData.pElement = pNewData;
 
 						}
@@ -254,61 +209,61 @@ namespace iv_pc_wdr {
 							memcpy(&oldDecl, declaration, sizeof * declaration);
 
 							for (BYTE k = 0; k < 14; k++) {
-								rage::grcFvf::grcFvfChannels channel = (rage::grcFvf::grcFvfChannels)k;
+								grcFvfChannels channel = (grcFvfChannels)k;
 								if (declaration->getChannelIsInUsed(channel)) {
-									rage::grcFvf::grcDataSize newType = (rage::grcFvf::grcDataSize)declaration->getDynamicDataSizeType(channel);
-									declaration->m_fvfChannelSizes.qwVal = setBits(declaration->m_fvfChannelSizes.qwVal, k * 4, newType, 4);
+									grcDataType newType = (grcDataType)declaration->getDynamicDataSizeType(channel);
+									declaration->m_Types.qwVal = setBits(declaration->m_Types.qwVal, k * 4, newType, 4);
 								}
 								else 
-									declaration->m_fvfChannelSizes.qwVal = setBits(declaration->m_fvfChannelSizes.qwVal, k * 4, 0, 4);
+									declaration->m_Types.qwVal = setBits(declaration->m_Types.qwVal, k * 4, 0, 4);
 							}
-							if (declaration->getChannelIsInUsed(rage::grcFvf::grcFvfChannels::grcfcTangent0) || 
-								declaration->getChannelIsInUsed(rage::grcFvf::grcFvfChannels::grcfcTangent1)) {
-								declaration->m_fvfChannelSizes.qwVal = 
-									declaration->m_fvfChannelSizes.qwVal = 
-									setBits(declaration->m_fvfChannelSizes.qwVal, 14 * 4, declaration->getDynamicDataSizeType(rage::grcFvf::grcFvfChannels::grcfcTangent0), 4);
-							}
-							else
-								declaration->m_fvfChannelSizes.qwVal = setBits(declaration->m_fvfChannelSizes.qwVal, 14 * 4, 0, 4);
-
-							if (declaration->getChannelIsInUsed(rage::grcFvf::grcFvfChannels::grcfcBinormal0) || 
-								declaration->getChannelIsInUsed(rage::grcFvf::grcFvfChannels::grcfcBinormal0)) {
-								declaration->m_fvfChannelSizes.qwVal = 
-									declaration->m_fvfChannelSizes.qwVal = 
-									setBits(declaration->m_fvfChannelSizes.qwVal, 15 * 4, declaration->getDynamicDataSizeType(rage::grcFvf::grcFvfChannels::grcfcBinormal0), 4);
+							if (declaration->getChannelIsInUsed(grcFvfChannels::fvfTangent0) || 
+								declaration->getChannelIsInUsed(::grcFvfChannels::fvfTangent1)) {
+								declaration->m_Types.qwVal = 
+									declaration->m_Types.qwVal = 
+									setBits(declaration->m_Types.qwVal, 14 * 4, declaration->getDynamicDataSizeType(grcFvfChannels::fvfTangent0), 4);
 							}
 							else
-								declaration->m_fvfChannelSizes.qwVal = setBits(declaration->m_fvfChannelSizes.qwVal, 15 * 4, 0, 4);
+								declaration->m_Types.qwVal = setBits(declaration->m_Types.qwVal, 14 * 4, 0, 4);
 
-							declaration->m_nbFvfSize = declaration->m_nbChannelCount * 0x10; // aligned :-)
+							if (declaration->getChannelIsInUsed(grcFvfChannels::fvfBinormal0) || 
+								declaration->getChannelIsInUsed(grcFvfChannels::fvfBinormal0)) {
+								declaration->m_Types.qwVal = 
+									declaration->m_Types.qwVal = 
+									setBits(declaration->m_Types.qwVal, 15 * 4, declaration->getDynamicDataSizeType(grcFvfChannels::fvfBinormal0), 4);
+							}
+							else
+								declaration->m_Types.qwVal = setBits(declaration->m_Types.qwVal, 15 * 4, 0, 4);
 
-							DWORD dwNewMemSize = declaration->m_nbFvfSize * vertBuf->m_wVertexCount;
-							BYTE* pNewMem = libertyFourXYZ::g_memory_manager.allocate<BYTE>("processwdr, new verticles, convert to dynamic", dwNewMemSize);
+							declaration->m_nbTotalSize = declaration->m_nbElementCount * 0x10; // aligned :-)
+
+							DWORD dwNewMemSize = declaration->m_nbTotalSize * vertBuf->m_wVertexCount;
+							BYTE* pNewMem = new("processwdr, new verticles, convert to dynamic") BYTE[dwNewMemSize];
 							BYTE* pOldMem = vertBuf->m_pVertexData.pElement;
 
 							for (WORD l = 0; l < vertBuf->m_wVertexCount; l++) {
-								DWORD dwPosInOldBuf = l * oldDecl.m_nbFvfSize;
-								DWORD dwPosInNewBuf = l * declaration->m_nbFvfSize;
+								DWORD dwPosInOldBuf = l * oldDecl.m_nbTotalSize;
+								DWORD dwPosInNewBuf = l * declaration->m_nbTotalSize;
 								for (BYTE k = 0; k < 18; k++) {
-									if ((declaration->m_fvf.dwVal >> s_DynamicOrder[k]) & 1) {
-										BYTE type = (oldDecl.m_fvfChannelSizes.qwVal >> (s_DynamicOrder[k] * 4)) & 0xf;
+									if ((declaration->m_UsedElements.dwVal >> rage::grcFvf::s_DynamicOrder[k]) & 1) {
+										BYTE type = (oldDecl.m_Types.qwVal >> (rage::grcFvf::s_DynamicOrder[k] * 4)) & 0xf;
 										Vector4 vec;
 										
 										if (type >= 0 && type <= 3) { // half
-											rage::Half4* halfVec = (rage::Half4*)(pOldMem + dwPosInOldBuf + oldDecl.getOffset(s_DynamicOrder[k]));
+											rage::Half4* halfVec = (rage::Half4*)(pOldMem + dwPosInOldBuf + oldDecl.getOffset(rage::grcFvf::s_DynamicOrder[k]));
 											vec.x = halfVec->x;
 											if(type >= 1) vec.y = halfVec->y;
 											if (type >= 2) vec.z = halfVec->z;
 											if (type >= 3) vec.w = halfVec->w;
 
-											BYTE VecSize = rage::sm_TypeSizes[type];
+											BYTE VecSize = rage::grcFvf::s_TypeSizes[type];
 
 										}
 										else if (type >= 4 && type <= 7) { // float
-											memcpy(&vec, pOldMem + dwPosInOldBuf + oldDecl.getOffset(s_DynamicOrder[k]), rage::sm_TypeSizes[type]);
+											memcpy(&vec, pOldMem + dwPosInOldBuf + oldDecl.getOffset(rage::grcFvf::s_DynamicOrder[k]), rage::grcFvf::s_TypeSizes[type]);
 										}
 										else if (type == 8 || type == 9) { // color32 and ubyte. color32 is 32bit value!
-											BYTE* pColor = (BYTE*)(pOldMem + dwPosInOldBuf + oldDecl.getOffset(s_DynamicOrder[k]));
+											BYTE* pColor = (BYTE*)(pOldMem + dwPosInOldBuf + oldDecl.getOffset(rage::grcFvf::s_DynamicOrder[k]));
 											vec.x = pColor[0] * 255;
 											vec.y = pColor[1] * 255;
 											vec.z = pColor[2] * 255;
@@ -316,9 +271,9 @@ namespace iv_pc_wdr {
 										}
 
 
-										type = (declaration->m_fvfChannelSizes.qwVal >> (s_DynamicOrder[k] * 4)) & 0xf;
+										type = (declaration->m_Types.qwVal >> (rage::grcFvf::s_DynamicOrder[k] * 4)) & 0xf;
 										if (type >= 4 && type <= 7) { // float
-											memcpy(pNewMem + dwPosInNewBuf, &vec, rage::sm_TypeSizes[type]);
+											memcpy(pNewMem + dwPosInNewBuf, &vec, rage::grcFvf::s_TypeSizes[type]);
 										}
 										else if (type == 8 || type == 9) { // color32 and ubyte. color32 is 32bit value!
 											BYTE* pColor = (BYTE*)(pNewMem + dwPosInNewBuf);
@@ -330,12 +285,12 @@ namespace iv_pc_wdr {
 										dwPosInNewBuf += 0x10;
 									}
 								}
-								dwPosInOldBuf += oldDecl.m_nbFvfSize;
+								dwPosInOldBuf += oldDecl.m_nbTotalSize;
 							}
 
 							declaration->m_bDynamicOrder = 1;
-							geom->m_wStride = vertBuf->m_dwVertexSize = declaration->m_nbFvfSize;
-							libertyFourXYZ::g_memory_manager.release(vertBuf->m_pVertexData.pElement);
+							geom->m_wStride = vertBuf->m_dwVertexSize = declaration->m_nbTotalSize;
+							dealloc_arr(vertBuf->m_pVertexData.pElement);
 							vertBuf->m_pVertexData.pElement = pNewMem;
 
 
@@ -352,18 +307,18 @@ namespace iv_pc_wdr {
 					pDrawable->m_lodgroup.m_lod[i].destroy();
 			}
 			if (pDrawable->m_pSkeleton)
-				libertyFourXYZ::g_memory_manager.release(pDrawable->m_pSkeleton);
+				dealloc(pDrawable->m_pSkeleton);
 		}
 
 		// fix models with my custom terrain shaders
-		if (true) {
+		if (false) {
 			for (BYTE i = 0; i < 4; i++) {
 				if (!pDrawable->m_lodgroup.m_lod.m_elements[i].pElement) continue;
 
 				for (WORD j = 0; j < pDrawable->m_lodgroup.m_lod.m_elements[i].get()->m_models.m_count; j++) {
 					auto model = pDrawable->m_lodgroup.m_lod.m_elements[i].get()->m_models[j].get();
 					for (WORD n = 0; n < model->m_geometries.m_count; n++) {
-						auto shader = pDrawable->m_pShaderGroup->m_shaders[model->m_pawShaderMappings[n]].get();
+						auto shader = pDrawable->m_pShaderGroup->m_shaders[model->m_pShaderMappings[n]].get();
 						if (shader->m_pszName != "gta_terrain_cb_w_4lyr_2tex_blend_spm" && shader->m_pszName != "gta_terrain_cb_w_4lyr_spm") continue; // skip non my shaders
 
 						auto geom = pDrawable->m_lodgroup.m_lod.m_elements[i].get()->m_models[j].get()->m_geometries[n].get();
@@ -376,65 +331,65 @@ namespace iv_pc_wdr {
 
 							auto declaration = vertBuf->m_pDeclarations.get();
 
-							if (!declaration->m_fvf.m_bTexCoord4 || !declaration->m_fvf.m_bTexCoord5) continue;
-							if (declaration->m_fvf.m_bSpecular)
+							if (!declaration->m_UsedElements.m_bTexCoord4 || !declaration->m_UsedElements.m_bTexCoord5) continue;
+							if (declaration->m_UsedElements.m_bSpecular)
 								trace("[processWdr] specular channel is in use, it will be overwritten");
 
 							rage::grcFvf oldDecl;
 							memcpy(&oldDecl, declaration, sizeof * declaration);
 
-							declaration->m_fvf.m_bSpecular = 1;
+							declaration->m_UsedElements.m_bSpecular = 1;
 
-							declaration->m_fvf.m_bTexCoord2 = 0;
-							declaration->m_fvf.m_bTexCoord3 = 0;
-							declaration->m_fvf.m_bTexCoord4 = 0;
-							declaration->m_fvf.m_bTexCoord5 = 0;
-							declaration->m_fvf.m_bTexCoord6 = 0;
-							declaration->m_fvf.m_bTexCoord7 = 0;
+							declaration->m_UsedElements.m_bTexCoord2 = 0;
+							declaration->m_UsedElements.m_bTexCoord3 = 0;
+							declaration->m_UsedElements.m_bTexCoord4 = 0;
+							declaration->m_UsedElements.m_bTexCoord5 = 0;
+							declaration->m_UsedElements.m_bTexCoord6 = 0;
+							declaration->m_UsedElements.m_bTexCoord7 = 0;
 
 							declaration->recomputeTotalSize();
 
 							if(pDrawable->m_pShaderGroup->m_vertexFormat.m_count)
-								pDrawable->m_pShaderGroup->m_vertexFormat[model->m_pawShaderMappings[n]] = declaration->m_fvf.dwVal;
+								pDrawable->m_pShaderGroup->m_vertexFormat[model->m_pShaderMappings[n]] = declaration->m_UsedElements.dwVal;
 
-							DWORD dwNewMemSize = declaration->m_nbFvfSize * vertBuf->m_wVertexCount;
-							BYTE* pNewMem = libertyFourXYZ::g_memory_manager.allocate<BYTE>("processwdr, fix my shaders", dwNewMemSize);
+							DWORD dwNewMemSize = declaration->m_nbTotalSize * vertBuf->m_wVertexCount;
+							BYTE* pNewMem = new("processwdr, fix my shaders") BYTE[dwNewMemSize];
 							BYTE* pOldMem = vertBuf->m_pVertexData.pElement;
 
 							for (WORD l = 0; l < vertBuf->m_wVertexCount; l++) {
-								DWORD dwPosInOldBuf = l * oldDecl.m_nbFvfSize;
-								DWORD dwPosInNewBuf = l * declaration->m_nbFvfSize;
+								DWORD dwPosInOldBuf = l * oldDecl.m_nbTotalSize;
+								DWORD dwPosInNewBuf = l * declaration->m_nbTotalSize;
 								for (BYTE k = 0; k < 18; k++) {
-									auto channel = (grcFvf::grcFvfChannels)k;
-									if ((declaration->m_fvf.dwVal >> k) & 1) {
-										if (channel != grcFvf::grcFvfChannels::grcfcSpecular) {
+									auto channel = (grcFvfChannels)k;
+									if ((declaration->m_UsedElements.dwVal >> k) & 1) {
+										if (channel != grcFvfChannels::fvfSpecular) {
 											DWORD dwElementSize = oldDecl.getSize(channel);
 											memcpy(pNewMem + dwPosInNewBuf + declaration->getOffset(channel),
 												pOldMem + dwPosInOldBuf + oldDecl.getOffset(channel), dwElementSize);
 										}
 										else {
-											//BYTE type = (oldDecl.m_fvfChannelSizes.qwVal >> (k * 4)) & 0xf;
-											BYTE uv4type = (oldDecl.m_fvfChannelSizes.qwVal >> (grcFvf::grcFvfChannels::grcfcTexture4 * 4)) & 0xf;
-											BYTE uv5type = (oldDecl.m_fvfChannelSizes.qwVal >> (grcFvf::grcFvfChannels::grcfcTexture5 * 4)) & 0xf;
+											//BYTE type = (oldDecl.m_Types.qwVal >> (k * 4)) & 0xf;
+											BYTE uv4type = (oldDecl.m_Types.qwVal >> (grcFvfChannels::fvfTexture4 * 4)) & 0xf;
+											BYTE uv5type = (oldDecl.m_Types.qwVal >> (grcFvfChannels::fvfTexture5 * 4)) & 0xf;
 											Vector4 vec;
 											if (uv4type >= 0 && uv4type <= 3) { // half
-												rage::Half4* halfVec = (rage::Half4*)(pOldMem + dwPosInOldBuf + oldDecl.getOffset(grcFvf::grcFvfChannels::grcfcTexture4));
+												rage::Half4* halfVec = (rage::Half4*)(pOldMem + dwPosInOldBuf + oldDecl.getOffset(grcFvfChannels::fvfTexture4));
 												vec.x = halfVec->x;
 												if (uv4type >= 1) vec.y = halfVec->y;
 											}
 											else if (uv4type >= 4 && uv4type <= 7) { // float
-												memcpy(&vec, pOldMem + dwPosInOldBuf + oldDecl.getOffset(grcFvf::grcFvfChannels::grcfcTexture4),
-													rage::sm_TypeSizes[uv4type <= 5 ? uv4type : 5]);
+												memcpy(&vec, pOldMem + dwPosInOldBuf + oldDecl.getOffset(grcFvfChannels::fvfTexture4),
+													rage::grcFvf::s_TypeSizes[uv4type <= 5 ? uv4type : 5]);
 											}
 
 											if (uv5type >= 0 && uv5type <= 3) { // half
-												rage::Half4* halfVec = (rage::Half4*)(pOldMem + dwPosInOldBuf + oldDecl.getOffset(grcFvf::grcFvfChannels::grcfcTexture5));
+												rage::Half4* halfVec = (rage::Half4*)(pOldMem + dwPosInOldBuf + oldDecl.getOffset(grcFvfChannels::fvfTexture5));
 												vec.z = halfVec->z;
 												if (uv5type >= 1) vec.z = halfVec->z;
 											}
 											else if (uv5type >= 4 && uv5type <= 7) { // float
-												memcpy(&vec.z, pOldMem + dwPosInOldBuf + oldDecl.getOffset(grcFvf::grcFvfChannels::grcfcTexture5),
-													rage::sm_TypeSizes[uv5type <= 5 ? uv5type : 5]);
+												memcpy(&vec.z, pOldMem + dwPosInOldBuf + oldDecl.getOffset(::grcFvfChannels::fvfTexture5),
+													rage::grcFvf::s_TypeSizes[uv5type <= 5 ? uv5type : 5]);
 											}
 
 
@@ -480,8 +435,8 @@ namespace iv_pc_wdr {
 									}
 								}
 							}
-							geom->m_wStride = vertBuf->m_dwVertexSize = declaration->m_nbFvfSize;
-							libertyFourXYZ::g_memory_manager.release(vertBuf->m_pVertexData.pElement);
+							geom->m_wStride = vertBuf->m_dwVertexSize = declaration->m_nbTotalSize;
+							dealloc_arr(vertBuf->m_pVertexData.pElement);
 							vertBuf->m_pVertexData.pElement = pNewMem;
 
 						}
@@ -490,7 +445,7 @@ namespace iv_pc_wdr {
 			}
 		}
 
-		if (true) {
+		if (false) {
 			if (pDrawable->m_pShaderGroup) {
 				pDrawable->m_pShaderGroup->m_vertexFormat.destroy();
 				pDrawable->m_pShaderGroup->m_indexMapping.destroy();
@@ -503,7 +458,7 @@ namespace iv_pc_wdr {
 		pDrawable->addToLayout(pLayout, 0);
 		pLayout->create();
 
-		pResource = libertyFourXYZ::g_memory_manager.allocate<rage::datResource>("processWdr, pResource2");
+		pResource = new ("processWdr, pResource2") rage::datResource(pszResName);
 		pResource->m_pszDebugName = pszResName;
 		pResource->m_pMap->validateMap(pLayout->getResourceInfo());
 
@@ -511,19 +466,63 @@ namespace iv_pc_wdr {
 		memcpy(pResource->getFixup((gtaDrawable*)pLayout->mainObj.second, sizeof(*pDrawable)), pDrawable, sizeof(*pDrawable));
 		pLayout->setOldPtrs();
 
-
 		pResource->saveRawResource(pszOutFile.getFilePath(), pszOutFile.getFileNameWithoutExt(), 1);
 		pResource->saveResource(pszOutFile.getFilePath(), pszOutFile.getFileNameWithoutExt(), "wdr", 110, pLayout->getResourceInfo(), 0);
 
-		pResource->m_pMap->printMap(trace);
-		libertyFourXYZ::g_memory_manager.release(pResource);
+		pResource->m_pMap->printMap();
+		dealloc(pResource);
 
-		libertyFourXYZ::g_memory_manager.release(pLayout);
+		dealloc(pLayout);
 
-		libertyFourXYZ::g_memory_manager.release(pDrawable);
+		dealloc(pDrawable);
 
+	}
 
+	void processWdd(rage::ConstString& pszFilePath) {
+		rage::ConstString pszResName = pszFilePath.getFileNameWithoutExt();
+		rage::ConstString pszOutFile = rage::ConstString::format("%s/%s_new.wdd", pszFilePath.getFilePath(), pszFilePath.getFileNameWithoutExt());
 
+		rage::datResource* pResource = new("processWdd, pResource") rage::datResource(pszResName);
+		rage::datResourceFileHeader* pResourceHeader = new ("processWdd, pResourceHeader") rage::datResourceFileHeader();
+		libertyFourXYZ::readRsc85Resource((char*)pszFilePath.c_str(), pResourceHeader, pResource);
+
+		rage::pgDictionary<gtaDrawable>* pDrawableDict = new("processWdd, Drawable dict") rage::pgDictionary < gtaDrawable>;
+		auto realPtr = pResource->getFixup((rage::pgDictionary < gtaDrawable>*)(pResourceHeader->flags.getVBlockStart() + 0x50000000), sizeof(*pDrawableDict));
+
+		dealloc(pResourceHeader);
+
+		copy_class(pDrawableDict, realPtr);
+
+		pDrawableDict->place(pResource);
+
+		dealloc(pResource);
+
+		libertyFourXYZ::rsc85_layout* pLayout = new ("rebuild wdd v110, rsc85 layout") libertyFourXYZ::rsc85_layout();
+
+		pDrawableDict->clearRefCount();
+		pDrawableDict->setRefCount();
+
+		pLayout->setMainObject(pDrawableDict);
+		pDrawableDict->addToLayout(pLayout, 0);
+		pLayout->create();
+
+		pResource = new ("processWdd, pResource2") rage::datResource(pszResName);
+		pResource->m_pszDebugName = pszResName;
+		pResource->m_pMap->validateMap(pLayout->getResourceInfo());
+
+		pDrawableDict->replacePtrs(pLayout, pResource, 0);
+		memcpy(pResource->getFixup((gtaDrawable*)pLayout->mainObj.second, sizeof(*pDrawableDict)), pDrawableDict, sizeof(*pDrawableDict));
+		pLayout->setOldPtrs();
+
+		pResource->saveRawResource(pszOutFile.getFilePath(), pszOutFile.getFileNameWithoutExt(), 1);
+		pResource->saveResource(pszOutFile.getFilePath(), pszOutFile.getFileNameWithoutExt(), "wdd", 110, pLayout->getResourceInfo(), 0);
+
+		pResource->m_pMap->printMap();
+		dealloc(pResource);
+
+		dealloc(pLayout);
+
+		dealloc(pDrawableDict);
 	}
 
 }

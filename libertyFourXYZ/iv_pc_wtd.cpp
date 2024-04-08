@@ -20,20 +20,19 @@ namespace iv_pc_wtd {
 
 		rage::ConstString pszResName = pszFilePath.getFileNameWithoutExt();
 
-		rage::datResource* pResource = libertyFourXYZ::g_memory_manager.allocate<rage::datResource>("processWtd, pResource1");
-		pResource->m_pszDebugName = pszResName;
-		rage::datResourceFileHeader* pResourceHeader = libertyFourXYZ::g_memory_manager.allocate<rage::datResourceFileHeader>("processWtd, pResHeader");
+		rage::datResource* pResource = new("processWtd, pResource1") rage::datResource(pszResName);
+		rage::datResourceFileHeader* pResourceHeader = new("processWtd, pResHeader")rage::datResourceFileHeader;
 		libertyFourXYZ::readRsc85Resource((char*)pszFilePath.c_str(), pResourceHeader, pResource);
 
-		rage::pgDictionary<rage::grcTexturePC>* pTextureDict = libertyFourXYZ::g_memory_manager.allocate<rage::pgDictionary<rage::grcTexturePC>>("processWtd, txdDict");
+		rage::pgDictionary<rage::grcTexturePC>* pTextureDict = new("processWtd, txdDict")rage::pgDictionary<rage::grcTexturePC>;
 		//pTextureDict->place(pResource, (rage::pgDictionary<rage::grcTexturePC>*)(pResourceHeader->flags.getVBlockStart() + 0x50000000));
 
 		auto realPtr = pResource->getFixup((rage::pgDictionary<rage::grcTexturePC>*)(pResourceHeader->flags.getVBlockStart() + 0x50000000), sizeof (*pTextureDict));
 		copy_class<rage::pgDictionary<rage::grcTexturePC>>(pTextureDict, realPtr);
 
 		pTextureDict->place(pResource);
-		libertyFourXYZ::g_memory_manager.release<rage::datResourceFileHeader>(pResourceHeader);
-		libertyFourXYZ::g_memory_manager.release<rage::datResource>(pResource);
+		dealloc(pResourceHeader);
+		dealloc(pResource);
 
 		trace("<textures>");
 
@@ -53,18 +52,18 @@ namespace iv_pc_wtd {
 		pTextureDict->addToLayout(&layout, 0);
 		layout.create();
 
-		pResource = libertyFourXYZ::g_memory_manager.allocate<rage::datResource>("processWtd, pResource2");
+		pResource = new("processWtd, pResource2")rage::datResource(pszResName);
 		pResource->m_pMap->validateMap(layout.getResourceInfo());
 		pTextureDict->replacePtrs(&layout, pResource, 0);
 		memcpy(pResource->getFixup((rage::pgDictionary<rage::grcTexturePC>*)layout.mainObj.second, sizeof(*pTextureDict)), pTextureDict, sizeof(*pTextureDict));
 
 		layout.setOldPtrs();
-		libertyFourXYZ::g_memory_manager.release<rage::pgDictionary<rage::grcTexturePC>>(pTextureDict);
+		dealloc(pTextureDict);
 
 		pResource->saveRawResource(pszFilePath.getFilePath(), pszFilePath.getFileNameWithoutExt(), 0);
 		pResource->saveResource(pszFilePath.getFilePath(), "newTxd", "wtd", 8, layout.getResourceInfo(), 0);
 
-		libertyFourXYZ::g_memory_manager.release<rage::datResource>(pResource);
+		dealloc(pResource);
 
 
 	}
@@ -75,7 +74,7 @@ namespace iv_pc_wtd {
 		rage::datResource* pResource;
 
 		rage::pgDictionary<rage::pgDictionary<rage::grcTexturePC>> *pMegaTextureDict =
-			libertyFourXYZ::g_memory_manager.allocate<rage::pgDictionary<rage::pgDictionary<rage::grcTexturePC>>>("mergeWtdsToWmtd, dict");
+			new("mergeWtdsToWmtd, dict") rage::pgDictionary<rage::pgDictionary<rage::grcTexturePC>>;
 		//pMegaTextureDict->m_pPageMap = libertyFourXYZ::g_memory_manager.allocate<rage::pgBasePageMap>();
 		//memset(pMegaTextureDict->m_pPageMap, 0, 0x4);
 #ifndef _DEBUG
@@ -84,20 +83,20 @@ namespace iv_pc_wtd {
 
 
 		for (DWORD i = 0; i < dwCount; i++) {
-			pResource = libertyFourXYZ::g_memory_manager.allocate<rage::datResource>("mergeWtdsToWmtd, pResLoop");
+			pResource = new("mergeWtdsToWmtd, pResLoop")rage::datResource("megaTxdDict");
 			pResource->m_pszDebugName = pszWtdFiles[i].getFileNameWithoutExt();
-			pResourceHeader = libertyFourXYZ::g_memory_manager.allocate<rage::datResourceFileHeader>("mergeWtdsToWmtd, pResHeaderLoop");
+			pResourceHeader = new("mergeWtdsToWmtd, pResHeaderLoop") rage::datResourceFileHeader;
 			libertyFourXYZ::readRsc85Resource(pszWtdFiles[i].c_str(), pResourceHeader, pResource);
 			
-			rage::pgDictionary<rage::grcTexturePC>* pTextureDict = libertyFourXYZ::g_memory_manager.allocate<rage::pgDictionary<rage::grcTexturePC>>("mergeWtdsToWmtd, smallDict");
+			rage::pgDictionary<rage::grcTexturePC>* pTextureDict = new("mergeWtdsToWmtd, smallDict")rage::pgDictionary<rage::grcTexturePC>;
 			//pTextureDict->place(pResource, (rage::pgDictionary<rage::grcTexturePC>*)(pResourceHeader->flags.getVBlockStart() + 0x50000000));
 			pTextureDict->place(pResource);
 			
-			libertyFourXYZ::g_memory_manager.release<rage::datResourceFileHeader>(pResourceHeader);
-			libertyFourXYZ::g_memory_manager.release<rage::datResource>(pResource);
+			dealloc(pResourceHeader);
+			dealloc(pResource);
 
 			pMegaTextureDict->addElement(atStringHash(pszWtdFiles[i].getFileNameWithoutExt(), 0), pTextureDict);
-			libertyFourXYZ::g_memory_manager.release<rage::pgDictionary<rage::grcTexturePC>>(pTextureDict);
+			//dealloc(pTextureDict); // ??
 
 		}
 		
@@ -109,33 +108,32 @@ namespace iv_pc_wtd {
 		pMegaTextureDict->addToLayout(&layout, 0);
 		layout.create();
 
-		pResource = libertyFourXYZ::g_memory_manager.allocate<rage::datResource>("mergeWtdsToWmtd, res");
-		pResource->m_pszDebugName = "megaTextureDictionary";
+		pResource = new("mergeWtdsToWmtd, res")rage::datResource("megaTextureDictionary");
 		pResource->m_pMap->validateMap(layout.getResourceInfo());
 		pMegaTextureDict->replacePtrs(&layout, pResource, 0);
 		//memcpy(pResource->getFixup<rage::grcTexturePC>((rage::grcTexturePC*)layout.mainObj.second), pMegaTextureDict, sizeof(*pMegaTextureDict));
 		copy_class(pResource->getFixup((rage::pgDictionary<rage::pgDictionary<rage::grcTexturePC>>*)layout.mainObj.second, sizeof(*pMegaTextureDict)), pMegaTextureDict);
 		layout.setOldPtrs();
 
-		libertyFourXYZ::g_memory_manager.release<rage::pgDictionary<rage::pgDictionary<rage::grcTexturePC>>>(pMegaTextureDict);
+		dealloc(pMegaTextureDict);
 
 		FILE* fOut = fopen(rage::ConstString::format("%s/big_txd_dict.bin", pszWtdFiles->getFilePath()), "wb");
 		for (BYTE i = 0; i < pResource->m_pMap->nbPhysicalCount + pResource->m_pMap->nbVirtualCount; i++)
 			fwrite(pResource->m_pMap->chunks[i].pDest, 1, pResource->m_pMap->chunks[i].dwSize, fOut);
 		fclose(fOut);
 
-		libertyFourXYZ::g_memory_manager.release<rage::datResource>(pResource);
+		dealloc(pResource);
 
 	}
 
 	void wtdFromDdsFiles(rage::ConstString &pszOutFile, DWORD dwCount, rage::ConstString* ppszDdsPath) {
-		rage::pgDictionary<rage::grcTexturePC>* pTextureDict = libertyFourXYZ::g_memory_manager.allocate<rage::pgDictionary<rage::grcTexturePC>>("wtdFromDdsFiles, txdDict");
+		rage::pgDictionary<rage::grcTexturePC>* pTextureDict = new("wtdFromDdsFiles, txdDict")rage::pgDictionary<rage::grcTexturePC>;
 		for (DWORD i = 0; i < dwCount; i++) {
-			rage::grcTexturePC *pTxd = libertyFourXYZ::g_memory_manager.allocate<rage::grcTexturePC>("wtd from dds files, for");
+			rage::grcTexturePC *pTxd = new("wtd from dds files, for") rage::grcTexturePC;
 			rage::ConstString* path = ppszDdsPath + i;
 			int result = pTxd->fromDdsPath(*path);
 			if(!result) pTextureDict->addElement(pTxd->getHash(), pTxd);
-			else libertyFourXYZ::g_memory_manager.release(pTxd);
+			else dealloc(pTxd);
 		}
 
 		for (WORD i = 0; i < pTextureDict->m_entries.size(); i++) {
@@ -152,20 +150,19 @@ namespace iv_pc_wtd {
 		pTextureDict->addToLayout(&layout, 0);
 		layout.create();
 
-		rage::datResource* pResource = libertyFourXYZ::g_memory_manager.allocate<rage::datResource>("wtdFromDdsFiles, res");
-		pResource->m_pszDebugName = pszOutFile.getFileNameWithoutExt();
+		rage::datResource* pResource = new("wtdFromDdsFiles, res")rage::datResource(pszOutFile.getFileNameWithoutExt());
 		
 		pResource->m_pMap->validateMap(layout.getResourceInfo());
 		pTextureDict->replacePtrs(&layout, pResource, 0);
 		memcpy(pResource->getFixup((rage::pgDictionary<rage::grcTexturePC>*)layout.mainObj.second, sizeof(*pTextureDict)), pTextureDict, sizeof(*pTextureDict));
 
 		layout.setOldPtrs();
-		libertyFourXYZ::g_memory_manager.release<rage::pgDictionary<rage::grcTexturePC>>(pTextureDict);
+		dealloc(pTextureDict);
 
 		pResource->saveRawResource(pszOutFile.getFilePath(), pszOutFile.getFileNameWithoutExt(), 1);
 		pResource->saveResource(pszOutFile.getFilePath(), pszOutFile.getFileNameWithoutExt(), "wtd", 8, layout.getResourceInfo(), 0);
 
-		libertyFourXYZ::g_memory_manager.release<rage::datResource>(pResource);
+		dealloc(pResource);
 
 
 	}

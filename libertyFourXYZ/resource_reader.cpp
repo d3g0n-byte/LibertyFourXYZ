@@ -28,7 +28,10 @@ namespace libertyFourXYZ {
 		// загружаем ресурс 
 		FILE* fIn = fopen(pszPath, "rb");
 
-		if (!fIn) return 4;
+		if (!fIn) {
+			error("[readRsc85Resource] resource '%s' does not exist", pszPath);
+			return 4;
+		}
 
 		fseek(fIn, 0, SEEK_END);
 		DWORD dwFileSize = ftell(fIn);
@@ -44,18 +47,18 @@ namespace libertyFourXYZ {
 		else return 5;
 
 		DWORD dwDecompressedSize = pResHeader->flags.getVirtualSize() + pResHeader->flags.getPhysicalSize();
-		BYTE* pDecompressed = libertyFourXYZ::g_memory_manager.allocate<BYTE>("datRes, read, decomp", dwDecompressedSize);
+		BYTE* pDecompressed = new("datRes, read, decomp")BYTE [dwDecompressedSize];
 		if (!pResHeader->flags.bUseExtendedSize && !pResHeader->flags.oldInfo.bCompressed)
 			fread(pDecompressed, 0x1, dwDecompressedSize, fIn);
 		else {
 			DWORD dwCompressedSize = dwFileSize - (pResHeader->flags.bUseExtendedSize ? 0x10 : 0xc);
-			BYTE* pCompressed = libertyFourXYZ::g_memory_manager.allocate<BYTE>("datRes, read, comp", dwCompressedSize);
+			BYTE* pCompressed = new("datRes, read, comp")BYTE [dwCompressedSize];
 			fread(pCompressed, 0x1, dwCompressedSize, fIn);
 
 			uLongf dwDecompressedSize2 = dwDecompressedSize;
 			//ZSTD_decompress(pDecompressed, dwDecompressedSize, pCompressed, dwCompressedSize);
 			uncompress(pDecompressed, &dwDecompressedSize2, pCompressed, dwCompressedSize);
-			libertyFourXYZ::g_memory_manager.release<BYTE>(pCompressed);
+			dealloc_arr(pCompressed);
 
 		}
 		fclose(fIn);
@@ -64,7 +67,7 @@ namespace libertyFourXYZ {
 		pResource->m_pMap->validateMap(&pResHeader->flags);
 		pResource->m_pMap->fillMap(pDecompressed);
 
-		libertyFourXYZ::g_memory_manager.release<BYTE>(pDecompressed);
+		dealloc_arr(pDecompressed);
 
 
 

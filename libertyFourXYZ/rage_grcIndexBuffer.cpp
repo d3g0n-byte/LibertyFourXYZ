@@ -14,14 +14,14 @@ namespace rage {
 	grcIndexBuffer::~grcIndexBuffer() {
 		this->m_dwIndexCount = 0;
 		if (this->m_pIndexData.pElement)
-			 libertyFourXYZ::g_memory_manager.release<WORD>(this->m_pIndexData.pElement);
+			dealloc_arr(this->m_pIndexData.pElement);
 	}
 
 	void grcIndexBuffer::place(rage::datResource* rsc) {
 		datBase::place(rsc);
 		if (this->m_dwIndexCount) {
 			WORD* idxPtr = rsc->getFixup<WORD>(this->m_pIndexData.pElement, this->m_dwIndexCount * 2);
-			this->m_pIndexData.pElement = libertyFourXYZ::g_memory_manager.allocate<WORD>("idxBuf, data", this->m_dwIndexCount);
+			this->m_pIndexData.pElement = new("idxBuf, data")WORD [this->m_dwIndexCount];
 			memcpy(this->m_pIndexData.pElement, idxPtr, this->m_dwIndexCount * sizeof WORD);
 		}
 	}
@@ -42,10 +42,10 @@ namespace rage {
 		pLayout->addObject(this->m_pIndexData.pElement, 6,this->m_dwIndexCount);
 	}
 
-	grcIndexBufferD11::grcIndexBufferD11() { this->m_pD3DBuffer = NULL; }
-	grcIndexBufferD11::~grcIndexBufferD11() { /*this->m_pD3DBuffer = NULL; */}
+	grcIndexBufferD3D::grcIndexBufferD3D() { this->m_pD3DBuffer = NULL; }
+	grcIndexBufferD3D::~grcIndexBufferD3D() { /*this->m_pD3DBuffer = NULL; */}
 
-	void grcIndexBufferD11::place(rage::datResource* rsc) {
+	void grcIndexBufferD3D::place(rage::datResource* rsc) {
 		//this->~grcIndexBufferD11();
 		//grcIndexBufferD11* realPtr = rsc->getFixup<rage::grcIndexBufferD11>(ptr);
 		//memcpy((BYTE*)this + sizeof(size_t), (BYTE*)&realPtr + sizeof(size_t), sizeof(*realPtr) - sizeof(size_t) - sizeof(size_t) * 0x8);
@@ -67,11 +67,11 @@ namespace rage {
 	//	return *this;
 	//}
 
-	void grcIndexBufferD11::replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth) {
+	void grcIndexBufferD3D::replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth) {
 		grcIndexBuffer::replacePtrs(pLayout, pRsc, dwDepth);
 	}
 
-	void grcIndexBufferD11::addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth) {
+	void grcIndexBufferD3D::addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth) {
 		grcIndexBuffer::addToLayout(pLayout, dwDepth);
 
 	}

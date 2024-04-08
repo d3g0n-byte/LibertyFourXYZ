@@ -15,62 +15,58 @@ namespace rage {
 	enum eTextureResourceType {
 		TEXTURE,						// Standard texture
 		TEXTURE_RENDERTARGET,			// Render target
-		TEXTURE_REFERENCE,				// Reference to an existing texture
-		TEXTURE_DICTIONARY_REFERENCE,	// Reference to an existing texture in a dictionary
+		TEXTURE_REFERENCE,				// Ref to texture
 	};
 
 	class grcTextureReferenceBase : public pgBase {
 	public:
 		BYTE m_nbResourceType;
 		BYTE _f9;
-		WORD m_wUsageCount;
+		WORD m_usageCount;
 		DWORD _fc;
 
-		void place(rage::datResource* rsc);
+		void place(datResource* rsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
-		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);
+		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, datResource* pRsc, DWORD dwDepth);
 		void clearRefCount();
 		void setRefCount();
 
-		//rage::grcTextureReferenceBase& operator=(rage::grcTextureReferenceBase& txd);
 	};
 
 	class grcTextureReference : public grcTextureReferenceBase {
 	public:
 		DWORD _f10;
-		rage::ConstString m_pszName; // name or 'null'. 'null' is empty texture. name without pack:/, memory:$... etc
-		rage::grcTexturePC* m_pTexture; // NULL in resource.
+		ConstString m_pszName; // name or 'null'. 'null' is empty texture. name without pack:/, memory:$... etc
+		grcTexturePC* m_pTexture; // NULL in resource.
 
-		void place(rage::datResource* rsc);
+		void place(datResource* rsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
-		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);
+		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, datResource* pRsc, DWORD dwDepth);
 		void clearRefCount();
 		void setRefCount();
 
-		//rage::grcTextureReference& operator=(rage::grcTextureReference& txd);
 	};
 
 	class grcTexture : public pgBase {
 	public:
-		BYTE m_nbResourceType; // 0 - rage::grcTexture{platform}, 2 - rage::grcTextureReference, 1 - skip?
+		BYTE m_nbResourceType; // 0 - rage::grcTexture{platform}, 2 - rage::grcTextureReference, 1 - Target?
 		BYTE m_nbDepth; 
-		WORD m_wUsageCount; // 0x4000?
-		DWORD _fc; // dwSceneNumber?
+		WORD m_usageCount; // 0x4000?
+		DWORD _fc;
 		DWORD _f10;
 
 		grcTexture();
 		void place(rage::datResource* rsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
-		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);
+		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, datResource* pRsc, DWORD dwDepth);
 		void clearRefCount();
 		void setRefCount();
 
-		//rage::grcTexture& operator=(rage::grcTexture& txd);
 	};
 
 	class grcTexturePC : public grcTexture {
 	public:
-		rage::ConstString m_pszName;
+		ConstString m_pszName;
 		IDirect3DDevice9* m_piTexture;
 		WORD m_wWidth;
 		WORD m_wHeight;
@@ -109,7 +105,7 @@ namespace rage {
 		DWORD getHash();
 		grcTexturePC();
 		~grcTexturePC();
-		//rage::grcTexturePC& operator=(rage::grcTexturePC& txd);
+		//grcTexturePC& operator=(grcTexturePC& txd);
 	};
 
 	static_assert(sizeof(grcTexturePC) == 0x50, "[rage::grcTexturePC] invalid size");

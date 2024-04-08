@@ -37,12 +37,12 @@ namespace rage {
 
 	void grcTextureReferenceBase::clearRefCount() {
 		pgBase::clearRefCount();
-		this->m_wUsageCount = 0;
+		this->m_usageCount = 0;
 	}
 
 	void grcTextureReferenceBase::setRefCount() {
 		pgBase::setRefCount();
-		this->m_wUsageCount++;
+		this->m_usageCount++;
 	}
 
 	void grcTextureReference::place(datResource* pRsc) {
@@ -69,7 +69,7 @@ namespace rage {
 		grcTextureReferenceBase::setRefCount();
 	}
 
-	grcTexture::grcTexture() : m_nbResourceType(0), m_nbDepth(0), m_wUsageCount(1), _fc(0), _f10(0) { }
+	grcTexture::grcTexture() : m_nbResourceType(0), m_nbDepth(0), m_usageCount(1), _fc(0), _f10(0) { }
 
 	inline void grcTexture::place(rage::datResource* rsc) { pgBase::place(rsc); }
 
@@ -89,12 +89,12 @@ namespace rage {
 
 	void grcTexture::clearRefCount() {
 		pgBase::clearRefCount();
-		this->m_wUsageCount = 0;
+		this->m_usageCount = 0;
 	}
 
 	void grcTexture::setRefCount() {
 		pgBase::setRefCount();
-		this->m_wUsageCount++;
+		this->m_usageCount++;
 	}
 
 	void grcTexturePC::recreateName() {
@@ -125,7 +125,7 @@ namespace rage {
 
 		DWORD pds = this->getPixelDataSize();
 		BYTE* realDataPtr = rsc->getFixup<BYTE>(this->m_pPixelData, pds);
-		this->m_pPixelData = libertyFourXYZ::g_memory_manager.allocate<BYTE>("txdPc, place, data", pds);
+		this->m_pPixelData = new("txdPc, place, data")BYTE[pds];
 		memcpy(this->m_pPixelData, realDataPtr, pds);
 	}
 
@@ -177,7 +177,7 @@ namespace rage {
 
 	grcTexturePC::~grcTexturePC() {
 		if(this->m_pPixelData)
-			libertyFourXYZ::g_memory_manager.release<BYTE>(this->m_pPixelData);
+			dealloc_arr(this->m_pPixelData);
 	}
 
 	//rage::grcTexturePC& rage::grcTexturePC::operator=(grcTexturePC& txd) {
@@ -223,7 +223,7 @@ namespace rage {
 		this->m_pPageMap = NULL;
 		this->m_nbResourceType = 0;
 		this->m_nbDepth = 0;
-		this->m_wUsageCount = 1;
+		this->m_usageCount = 1;
 		this->_fc = 0;
 		this->_f10 = 0;
 		this->m_wWidth = pDds->dwWidth;
@@ -241,7 +241,7 @@ namespace rage {
 		this->m_pPrev = NULL;
 		this->m_pNext = NULL;
 		DWORD dwSize = pDds->getPixelDataSize();
-		this->m_pPixelData = libertyFourXYZ::g_memory_manager.allocate<BYTE>("txdPc, fromDds, data", dwSize);
+		this->m_pPixelData = new("txdPc, fromDds, data")BYTE [dwSize];
 		memcpy(this->m_pPixelData, pDds->pPixelData, dwSize);
 		memset(this->__4c, 0x0, 4);
 

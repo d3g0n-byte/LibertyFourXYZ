@@ -108,7 +108,7 @@
     <ClCompile Include="fiTokenizer.cpp">
       <Filter>Header Files\libertyFourXYZ</Filter>
     </ClCompile>
-    <ClCompile Include="mp3_pc_wtd.cpp">
+    <ClCompile Include="helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -200,11 +200,17 @@
     <ClInclude Include="fiTokenizer.h">
       <Filter>Header Files\libertyFourXYZ</Filter>
     </ClInclude>
-    <ClInclude Include="mp3_pc_wtd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="errors.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rage_phBound.h">
+      <Filter>Header Files\rage</Filter>
+    </ClInclude>
+    <ClInclude Include="helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dictionary.h">
+      <Filter>Header Files\libertyFourXYZ</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

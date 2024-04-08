@@ -7,7 +7,6 @@
 
 #include "iv_pc_wtd.h"
 #include "iv_pc_wdr.h"
-#include "mp3_pc_wtd.h"
 #include "rage_string.h"
 #include "settings.h"
 #include "globals.h"
@@ -27,9 +26,11 @@ void _cdecl exitFunc() {
 void printInfo() {
 	printf("use: %s args...\n", rage::ConstString(libertyFourXYZ::g_szExePath).getFileName().c_str());
 	printf("args:\n" );
-	printf("r_wtd_v10 - rebuild Red Dead Redemption NS/PS4 rage::pgDictionary<rage::grcTextureD11>\n" );
-	printf("m_wtd_v10 - merge txds\n" );
-	//printf("r_wfd - rebuild Red Dead Redemption NS/PS4 rdrFragLod\n" );
+	printf("r_wtd_v8 - rebuild IV PC rage::pgDictionary<rage::grcTexture>\n" );
+	printf("m_wtd_v8 - merge txds\n" );
+	printf("c_wtd_v8 - from fftdc\n" );
+	printf("r_wdr_v110 - rebuild IV PC gtaDrawable\n" );
+	//printf("r_wdd_v110 - rebuild IV PC rage::pgDictionary<gtaDrawable>\n" );
 }
 
 void main(int argc, rage::ConstString argv[]) {
@@ -38,17 +39,7 @@ void main(int argc, rage::ConstString argv[]) {
 	libertyFourXYZ::initializeGlobals();
 	libertyFourXYZ::readSettings();
 
-	if (argc < 2) {
-		printInfo();
-		return;
-	}
-
-	//rage::ConstString line = "O\\df/rr\\re/er.wdr";
-	//printf("%s\n", line.getFileExt().c_str());
-
-	//dds ddsfile("C:\\Users\\im\\Desktop\\New folder (7)\\vehicle_generic_mesh3_normal_2.dds");
-	//ddsfile.saveToFile("C:\\Users\\im\\Desktop\\3d\\newTexture.dds");
-	//return;
+	if (argc < 2) { printInfo(); return; }
 
 	rage::ConstString c = argv[1];
 	rage::ConstString *pFiles = argv + 2;
@@ -59,10 +50,13 @@ void main(int argc, rage::ConstString argv[]) {
 	else if (c == "-r_wdr_v110") {
 		iv_pc_wdr::processWdr(*pFiles);
 	}
+	else if (c == "-r_wdd_v110") {
+		iv_pc_wdr::processWdd(*pFiles);
+	}
 	else if (c == "-m_wtd_v8") {
 		iv_pc_wtd::mergeWtdsToWmtd(argc - 2, pFiles);
 	}
-	else if (c == "-c_wtd_v8" || c == "-c_wtd_v11") {
+	else if (c == "-c_wtd_v8" ) {
 		//iv_pc_wtd::wtdFromDdsFiles(argv[2], argc - 3, argv + 3);
 		rage::ConstString* ppszDdsPath = NULL;
 
@@ -72,7 +66,7 @@ void main(int argc, rage::ConstString argv[]) {
 		if (std::string(argv[3]) == "-d") {
 			dwFileCount = argc - 4;
 			if (dwFileCount < 1) { error("[main] no dds textures found"); return; }
-			ppszDdsPath = libertyFourXYZ::g_memory_manager.allocate<rage::ConstString>("main, dds path 1", dwFileCount);
+			ppszDdsPath = new ("main, dds path 1") rage::ConstString[dwFileCount];
 			for (int i = 4; i < argc; i++) ppszDdsPath[i - 4] = argv[i];
 		}
 		else if (std::string(argv[3]) == "-f") {
@@ -82,18 +76,15 @@ void main(int argc, rage::ConstString argv[]) {
 					dwFileCount++;
 
 			if (dwFileCount < 1) { error("[main] no dds textures found"); return; }
-			ppszDdsPath = libertyFourXYZ::g_memory_manager.allocate<rage::ConstString>("main, dds path 2", dwFileCount);
+			ppszDdsPath = new ("main, dds path 2") rage::ConstString[dwFileCount];
 			DWORD dwIndex = 0;
 			for (const auto& entry : std::filesystem::directory_iterator(argv[4].c_str()))
 				if (entry.path().extension() == ".dds")
 					ppszDdsPath[dwIndex++] = entry.path().string().c_str();
 		}
-		if(c == "-c_wtd_v8")
-			iv_pc_wtd::wtdFromDdsFiles(pszOutFile, dwFileCount, ppszDdsPath);
-		else
-			mp3_pc_wtd::wtdFromDdsFiles(pszOutFile, dwFileCount, ppszDdsPath);
+		iv_pc_wtd::wtdFromDdsFiles(pszOutFile, dwFileCount, ppszDdsPath);
 		
-		libertyFourXYZ::g_memory_manager.release<rage::ConstString>(ppszDdsPath);
+		dealloc_arr(ppszDdsPath);
 	}
 	else printInfo();
 

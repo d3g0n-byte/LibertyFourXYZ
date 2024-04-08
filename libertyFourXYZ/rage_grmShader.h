@@ -27,22 +27,22 @@ namespace rage {
 
 
 		Entry* pEntries;
-		grcEffect* pBasis;
+		grcEffect* pEffect;
 		DWORD dwCount;
 		DWORD dwTotalSize;
 		BYTE* pTypes;
-		DWORD dwBasisHashCode; // fxc hash
-		void* _f18; // ptr?
+		DWORD dwEffectHashCode; // fxc hash
+		void* _f18; // ptr
 		DWORD _f1c;
 		DWORD* pEntriesHashes;
 		DWORD _f24;
 		DWORD _f28;
-		void* _f2c; // ptr?
+		void* _f2c; // ptr
 
 		grcInstanceData();
 		~grcInstanceData();
 
-		void place(datResource* pRsc, pgDictionary<grcTexturePC>* pTxd = NULL);
+		void place(datResource* pRsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
 		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);
 		void clearRefCount();
@@ -72,7 +72,7 @@ namespace rage {
 		grmShader();
 		~grmShader();
 
-		void place(datResource* pRsc, pgDictionary<grcTexturePC>* pTxd = NULL);
+		void place(datResource* pRsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
 		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);
 		void clearRefCount();
@@ -92,7 +92,7 @@ namespace rage {
 		grmShaderFx();
 		~grmShaderFx();
 
-		void place(datResource* pRsc, pgDictionary<grcTexturePC>* pTxd = NULL);
+		void place(datResource* pRsc);
 		void addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth);
 		void replacePtrs(libertyFourXYZ::rsc85_layout* pLayout, rage::datResource* pRsc, DWORD dwDepth);
 		void clearRefCount();

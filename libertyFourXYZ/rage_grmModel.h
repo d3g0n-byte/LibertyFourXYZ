@@ -9,14 +9,14 @@ namespace rage {
 	class grmModel : public rage::datBase {
 	public:
 		rage::grcArray<rage::datOwner<rage::grmGeometryQB>> m_geometries;
-		rage::Vector4* m_pavBounds;
-		WORD* m_pawShaderMappings;
+		rage::Vector4* m_pBounds;
+		WORD* m_pShaderMappings;
 		BYTE m_nbBoneCount; // aka matrix
 		BYTE m_nbFlags; // 0x1 - skinned
 		BYTE m_nbType; // unused
 		BYTE m_nbBoneIndex;
 		BYTE m_nbStride;
-		BYTE m_nbSkinFlag; // in V and tessellation
+		BYTE m_bSkinnned; // in V and tessellation
 		WORD m_wShaderMappingCount;
 
 		grmModel();

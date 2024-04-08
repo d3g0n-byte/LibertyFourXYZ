@@ -131,8 +131,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="fiTokenizer.cpp" />
+    <ClCompile Include="helpers.cpp" />
     <ClCompile Include="iv_pc_wdr.cpp" />
-    <ClCompile Include="mp3_pc_wtd.cpp" />
     <ClCompile Include="rage_crBone.cpp" />
     <ClCompile Include="dds.cpp" />
     <ClCompile Include="globals.cpp" />
@@ -163,11 +163,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dds.h" />
+    <ClInclude Include="dictionary.h" />
     <ClInclude Include="errors.h" />
     <ClInclude Include="fiTokenizer.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="helpers.h" />
     <ClInclude Include="iv_pc_wdr.h" />
-    <ClInclude Include="mp3_pc_wtd.h" />
     <ClInclude Include="memory_manager.h" />
     <ClInclude Include="rage_array.h" />
     <ClInclude Include="rage_base.h" />
@@ -184,6 +185,7 @@
     <ClInclude Include="rage_float16.h" />
     <ClInclude Include="rage_light.h" />
     <ClInclude Include="rage_math.h" />
+    <ClInclude Include="rage_phBound.h" />
     <ClInclude Include="rage_rmcDrawable.h" />
     <ClInclude Include="rage_rmcLod.h" />
     <ClInclude Include="rage_string.h" />

@@ -18,13 +18,13 @@ namespace rage {
 
 	}
 
-	crBoneData& crBoneData::operator=(crBoneData& bone) {
-		this->m_pszName = bone.m_pszName;
-		this->m_dwFlags = bone.m_dwFlags;
-		memcpy(&this->m_wIndex, &bone.m_wIndex, sizeof(crBoneData) - offsetof(crBoneData, m_wIndex));
+	//crBoneData& crBoneData::operator=(crBoneData& bone) {
+	//	this->m_pszName = bone.m_pszName;
+	//	this->m_dwFlags = bone.m_dwFlags;
+	//	memcpy(&this->m_wIndex, &bone.m_wIndex, sizeof(crBoneData) - offsetof(crBoneData, m_wIndex));
 
-		return *this;
-	}
+	//	return *this;
+	//}
 
 	void crBoneData::addToLayout(libertyFourXYZ::rsc85_layout* pLayout, DWORD dwDepth) {
 		this->m_pszName.addToLayout(pLayout, dwDepth);

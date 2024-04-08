@@ -366,7 +366,7 @@ int dds::loadFromMemory(BYTE* pDdsBuf) {
 
 	DWORD dwDataSize = this->getPixelDataSize();
 	
-	this->pPixelData = libertyFourXYZ::g_memory_manager.allocate<BYTE>("load dds, pixels",dwDataSize);
+	this->pPixelData = new("load dds, pixels") BYTE[dwDataSize];
 	memcpy(this->pPixelData, pDdsBuf + dds::DDS_DX9_HEADER_SIZE, dwDataSize);
 
 	trace("[dds::loadFromMemory] loaded %s texture", this->getThisDdsFormatAsText());
@@ -380,12 +380,12 @@ int dds::loadFromFile(const char* pszFilePath) {
 	DWORD dwFileSize = ftell(fIn);
 	fseek(fIn, 0, SEEK_SET);
 	if (!dwFileSize) return 2;
-	BYTE* pDds = libertyFourXYZ::g_memory_manager.allocate<BYTE>("load dds, raw file", dwFileSize);
+	BYTE* pDds = new("load dds, raw file") BYTE[dwFileSize];
 	fread(pDds, 1, dwFileSize, fIn);
 	auto result = this->loadFromMemory(pDds);
 	if (result == 2)
 		error("[dds::loadFromFile] texture '%s' is unsupported", pszFilePath);
-	libertyFourXYZ::g_memory_manager.release<BYTE>(pDds);
+	dealloc_arr(pDds);
 	return result;
 }
 
@@ -403,7 +403,7 @@ dds::dds(BYTE* pFile) {
 }
 
 dds::~dds() {
-	libertyFourXYZ::g_memory_manager.release<BYTE>(this->pPixelData);
+	dealloc_arr(this->pPixelData);
 }
 
 DWORD dds::getDdsSize() {
@@ -418,13 +418,13 @@ int dds::saveToMemory(BYTE* pDdsBuf) {
 
 int dds::saveToFile(const char* pszFilePath) {
 	DWORD dwSize = this->getDdsSize();
-	BYTE* pDdsBuf = libertyFourXYZ::g_memory_manager.allocate<BYTE>("save dds, raw file",dwSize);
+	BYTE* pDdsBuf = new("save dds, raw file") BYTE[dwSize];
 	if (this->saveToMemory(pDdsBuf)) return 1;
 	FILE* fOut = fopen(pszFilePath, "wb");
 	if (!fOut) return 2;
 	fwrite(pDdsBuf, sizeof(BYTE), dwSize, fOut);
 	fclose(fOut);
-	libertyFourXYZ::g_memory_manager.release(pDdsBuf);
+	dealloc_arr(pDdsBuf);
 	return 0;
 }
 
@@ -440,6 +440,7 @@ DWORD dds::getTotalPixelsCount() {
 	return count;
 }
 
+// from LibertyFourX
 //void dds::convertDXT1ToUni() {
 	//DWORD dwPosCurrentMipInDds = 0;
 	//DWORD dwMipSize = 0;

@@ -1,6 +1,7 @@
 #include "rage_datResource.h"
 
 #include "rage_string.h"
+#include "rage_array.h"
 
 #include "trace.h"
 #include "compression/zlib/zlib.h"
@@ -73,7 +74,7 @@ namespace rage {
 	datResourceChunk::datResourceChunk() { memset(this, 0x0, sizeof * this); }
 	datResourceChunk::~datResourceChunk() {
 		if(this->dwSize)
-			libertyFourXYZ::g_memory_manager.release<BYTE>(this->pDest);
+			dealloc_arr(this->pDest);
 		memset(this, 0x0, sizeof * this);
 	}
 
@@ -86,7 +87,7 @@ namespace rage {
 
 		rage::datResourceChunk* chunk = chunks;
 		for (BYTE i = 0; i < this->nbVirtualCount + this->nbPhysicalCount; i++) {
-			chunk->pDest = libertyFourXYZ::g_memory_manager.allocate<BYTE>("datResource, chunk", chunk->dwSize);
+			chunk->pDest = new("datResource, chunk")BYTE [chunk->dwSize];
 #ifndef _DEBUG
 			memset(chunk->pDest, 0xcd, chunk->dwSize);
 #endif // _DEBUG
@@ -234,16 +235,22 @@ namespace rage {
 
 	datResource::datResource(const char* pszDebugName) {
 		this->m_pszDebugName = pszDebugName;
-		this->m_pMap = libertyFourXYZ::g_memory_manager.allocate<rage::datResourceMap>("datResource, map");
+		this->m_pMap = new("datResource, map") datResourceMap;
+
+		helper.m_pRagePtr = new grcArray<void*>;
+		helper.m_pRealPtr = new grcArray<void*>;
 	}
 
-	datResource::datResource() {
-		this->m_pszDebugName = "unnamed";
-		this->m_pMap = libertyFourXYZ::g_memory_manager.allocate<rage::datResourceMap>("datResource, map");
-	}
+	//datResource::datResource() {
+	//	this->m_pszDebugName = "unnamed";
+	//	this->m_pMap = libertyFourXYZ::g_memory_manager.allocate<rage::datResourceMap>("datResource, map");
+	//}
 
 	datResource::~datResource() {
-		libertyFourXYZ::g_memory_manager.release<rage::datResourceMap>(this->m_pMap);
+		dealloc(this->m_pMap);
+
+		dealloc(helper.m_pRagePtr);
+		dealloc(helper.m_pRealPtr);
 	}
 
 
@@ -275,9 +282,23 @@ namespace rage {
 		}
 	}
 
+	void* datResource::checkPtrForDuplicate(void* ragePtr) {
+		for (size_t i = 0; i < helper.m_pRagePtr->m_count; i++) {
+			if ((*helper.m_pRagePtr)[i] == ragePtr) {
+				return (*helper.m_pRealPtr)[i];
+			}
+		}
+		return NULL;
+	}
+
+	void datResource::addPtrForDuplicate(void* ragePtr, void* realPtr) {
+		helper.m_pRagePtr->add(ragePtr);
+		helper.m_pRealPtr->add(realPtr);
+	}
+
 	void datResource::saveResource(const char* pszPath, const char* pszName, const char* pszExt, DWORD dwVersion, datResourceInfo* pResInfo, BYTE nbCompressionIndex) {
-		BYTE* pUncompressed = libertyFourXYZ::g_memory_manager.allocate<BYTE>("datRes, save, uncompBuf", pResInfo->getVirtualSize() + pResInfo->getPhysicalSize());
-		BYTE* pCompressed = libertyFourXYZ::g_memory_manager.allocate<BYTE>("datRes, save, compBuf", pResInfo->getVirtualSize() + pResInfo->getPhysicalSize());
+		BYTE* pUncompressed = new("datRes, save, uncompBuf")BYTE[pResInfo->getVirtualSize() + pResInfo->getPhysicalSize()];
+		BYTE* pCompressed = new("datRes, save, compBuf")BYTE[pResInfo->getVirtualSize() + pResInfo->getPhysicalSize()];
 	
 		if (!pResInfo->bUseExtendedSize) pResInfo->oldInfo.bCompressed = 1;
 
@@ -293,7 +314,7 @@ namespace rage {
 			dwCompressedSize = dsize;
 		}
 
-		libertyFourXYZ::g_memory_manager.release<BYTE>(pUncompressed);
+		dealloc_arr(pUncompressed);
 
 		FILE* fOut = fopen(rage::ConstString::format("%s/%s.%s", pszPath, pszName, pszExt), "wb");
 		DWORD dwMagic;
@@ -310,7 +331,7 @@ namespace rage {
 			fwrite(pResInfo, sizeof(pResInfo->oldInfo), 1, fOut);
 		}
 		fwrite(pCompressed, 1, dwCompressedSize, fOut);
-		libertyFourXYZ::g_memory_manager.release<BYTE>(pCompressed);
+		dealloc_arr(pCompressed);
 
 		fclose(fOut);
 
