@@ -473,7 +473,7 @@ void getFilesPathFromFolder(rage::ConstString* ppszOutPath, DWORD* pCount, const
 }
 
 unsigned __int64 setBits(unsigned __int64 qwValue, DWORD dwPos, unsigned __int64 qwBitsValue, DWORD dwValSize) {
-	return (qwValue & (((1 << dwValSize) - 1) << dwPos)) | ((qwBitsValue << (64 - dwValSize)) >> (64 - dwValSize)) << dwPos;
+	return (qwValue & ~(((1 << dwValSize) - 1) << dwPos)) | ((qwBitsValue << (64 - dwValSize)) >> (64 - dwValSize)) << dwPos;
 }
 
 DWORD crc_z(DWORD dwBase, BYTE *pData, size_t size) {
